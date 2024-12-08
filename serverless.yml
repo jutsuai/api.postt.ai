@@ -1,0 +1,24 @@
+org: saidulbadhon
+app: noven-api
+service: noven-api
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  stage: ${opt:stage, 'staging'}
+  region: us-west-2
+  timeout: 300
+  memorySize: 2048
+  environment:
+    NODE_ENV: production
+    MONGODB_URL: mongodb+srv://noven-admin:iMHUKB5Jdp8sLNIk@cluster0.qkx6r.mongodb.net/noven-db?retryWrites=true&w=majority
+    JWT_SECRET: iMHUKB5Jdp8sLNIk
+    SENDGRID_API_KEY: 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
+    FROM_EMAIL: "Noven Information <info@noven.ca>"
+    GOOGLE_RECAPTCHA_SECRET_KEY: 6Lc0fpodAAAAAJsBjT9wvDKKdclwy3ruWJ14i83Z
+functions:
+  app:
+    handler: server.handler
+    events:
+      - http: ANY /
+      - http: "ANY {proxy+}"
