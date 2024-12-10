@@ -1,35 +1,49 @@
 const express = require("express");
-const User = require("../models/user");
 const { default: axios } = require("axios");
 const router = express.Router();
 
-const getAccessToken = async (code) => {
-  const clientId = process.env.LINKEDIN_CLIENT_ID;
-  const clientSecret = process.env.LINKEDIN_CLIENT_SECRET;
-  const redirectUri = process.env.LINKEDIN_REDIRECT_URI;
+// const response = {
+//   avatar: userInfo?.picture,
 
-  console.log("code : ", code);
+//   email: userInfo?.email,
+//   emailVerified: userInfo?.email_verified,
+//   firstName: userInfo?.given_name,
+//   lastName: userInfo?.family_name,
+//   name: userInfo?.name,
 
-  const tokenResponse = await axios.post(
-    "https://www.linkedin.com/oauth/v2/accessToken",
-    new URLSearchParams({
-      grant_type: "authorization_code",
-      code,
-      redirect_uri: redirectUri,
-      client_id: clientId,
-      client_secret: clientSecret,
-    }).toString(),
-    {
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-    }
-  );
+//   linkedin: {
+//     sub: userInfo?.sub,
+//     accessToken,
+//   },
+// };
 
-  console.log("tokenResponse : ", tokenResponse.data);
+// const getAccessToken = async (code) => {
+//   const clientId = process.env.LINKEDIN_CLIENT_ID;
+//   const clientSecret = process.env.LINKEDIN_CLIENT_SECRET;
+//   const redirectUri = process.env.LINKEDIN_REDIRECT_URI;
 
-  return tokenResponse.data.access_token;
-};
+//   console.log("code : ", code);
+
+//   const tokenResponse = await axios.post(
+//     "https://www.linkedin.com/oauth/v2/accessToken",
+//     new URLSearchParams({
+//       grant_type: "authorization_code",
+//       code,
+//       redirect_uri: redirectUri,
+//       client_id: clientId,
+//       client_secret: clientSecret,
+//     }).toString(),
+//     {
+//       headers: {
+//         "Content-Type": "application/x-www-form-urlencoded",
+//       },
+//     }
+//   );
+
+//   console.log("tokenResponse : ", tokenResponse.data);
+
+//   return tokenResponse.data.access_token;
+// };
 
 const getUserInfo = async (accessToken) => {
   const profileResponse = await axios.get(
@@ -39,7 +53,7 @@ const getUserInfo = async (accessToken) => {
     }
   );
 
-  return profileResponse.data;
+  return profileResponse;
 };
 
 router
@@ -61,17 +75,47 @@ router
     console.log(params.toString());
     const url = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}&scope=${scope}`;
 
-    // const url = `https://www.linkedin.com/oauth/v2/authorization?${params.toString()}`;
-
-    console.log(url);
     res.redirect(url);
   })
   .post("/linkedin/accessToken", async (req, res, next) => {
-    const { code } = req.body;
-    // Exchange authorization code for access token
-    const accessToken = await getAccessToken(code);
+    try {
+      const { code } = req.body;
 
-    return res.json(accessToken);
+      console.log(code);
+
+      if (!code) {
+        return res.status(400).send("Authorization code not found");
+      }
+
+      // Exchange authorization code for access token
+      const clientId = process.env.LINKEDIN_CLIENT_ID;
+      const clientSecret = process.env.LINKEDIN_CLIENT_SECRET;
+      const redirectUri = process.env.LINKEDIN_REDIRECT_URI;
+
+      const data = new URLSearchParams({
+        grant_type: "authorization_code",
+        code,
+        redirect_uri: redirectUri,
+        client_id: clientId,
+        client_secret: clientSecret,
+      });
+
+      const tokenResponse = await axios.post(
+        "https://www.linkedin.com/oauth/v2/accessToken",
+        data,
+        {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          validateStatus: (status) => status < 500,
+        }
+      );
+
+      return res.status(200).send(tokenResponse?.data);
+    } catch (error) {
+      console.error(error);
+      res.status(500).send("Error during LinkedIn authentication");
+    }
   })
   .post("/linkedin/userinfo", async (req, res, next) => {
     const { accessToken } = req.body;
@@ -79,6 +123,35 @@ router
     const data = await getUserInfo(accessToken);
 
     return res.json(data);
+  })
+  .post("/linkedin/getOrg", async (req, res, next) => {
+    try {
+      const { accessToken } = req.body;
+
+      console.log(accessToken);
+
+      if (!accessToken) {
+        return res.status(400).send("Authorization accessToken not found");
+      }
+
+      // Exchange authorization code for access token
+
+      const tokenResponse = await axios.get(
+        "https://api.linkedin.com/v2/ugcPosts?q=authors&authors=List(urn:li:person:{personId})",
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+
+          // headers: {
+          //   "Content-Type": "application/x-www-form-urlencoded",
+          // },
+        }
+      );
+
+      return res.status(200).send(tokenResponse?.data);
+    } catch (error) {
+      console.error(error);
+      res.status(500).send("Error during LinkedIn authentication");
+    }
   })
   .post("/linkedin/post/text", async (req, res, next) => {
     const {
