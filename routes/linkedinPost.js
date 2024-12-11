@@ -62,7 +62,7 @@ router
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
-          "LinkedIn-Version": "202401",
+          "LinkedIn-Version": process.env.LINKEDIN_API_VERSION,
           "X-RestLi-Protocol-Version": "2.0.0",
           "Content-Type": "application/json",
         },
@@ -98,7 +98,7 @@ router
       //   {
       //     headers: {
       //       Authorization: `Bearer ${accessToken}`,
-      //       "LinkedIn-Version": "202401",
+      // "LinkedIn-Version": process.env.LINKEDIN_API_VERSION,
       //       "X-RestLi-Protocol-Version": "2.0.0",
       //       "Content-Type": "application/json",
       //     },
