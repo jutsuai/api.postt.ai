@@ -2,15 +2,12 @@ const express = require("express");
 
 const router = express.Router();
 
-const auth = require("./auth");
-const linkedin = require("./linkedin");
-const linkedinPost = require("./linkedinPost");
+// const linkedin = require("./linkedin");
+const linkedinOld = require("./older/linkedin");
 
-const orgPost = require("./orgPost");
+router.use("/linkedinOld", linkedinOld);
 
-router.use("/auth", auth);
-router.use("/linkedin", linkedin);
-router.use("/linkedin/post", linkedinPost);
-router.use("/linkedin/org", orgPost);
+router.use("/linkedin", require("./linkedin/index"));
+router.use("/linkedin/organizations", require("./linkedin/organizations"));
 
 module.exports = router;

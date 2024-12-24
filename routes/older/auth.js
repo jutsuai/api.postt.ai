@@ -8,6 +8,9 @@ router
     // const redirectUri = encodeURIComponent(process.env.LINKEDIN_REDIRECT_URI);
     const redirectUri = encodeURIComponent(process.env.LINKEDIN_REDIRECT_URI);
     const scope = encodeURIComponent("openid profile w_member_social email");
+    // const scope = encodeURIComponent(
+    //   "r_organization_followers r_organization_social rw_organization_admin r_organization_social_feed w_member_social w_organization_social r_basicprofile w_organization_social_feed w_member_social_feed r_1st_connections_size"
+    // );
     const state = "randomstring"; // Use a secure method for generating state
 
     const params = new URLSearchParams({
