@@ -76,6 +76,7 @@ router
       res.status(500).send("Error during LinkedIn authentication");
     }
   });
+
 //   .post("/linkedin/userinfo", async (req, res, next) => {
 //     const { accessToken } = req.body;
 //     // Exchange authorization code for access token

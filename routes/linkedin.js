@@ -114,12 +114,7 @@ router
     }
   })
   .post("/linkedin/post/text", async (req, res, next) => {
-    const {
-      accessToken,
-
-      postContent,
-      sub,
-    } = req.body;
+    const { accessToken, postContent, sub } = req.body;
 
     const postData = {
       author: `urn:li:person:${sub}`,
