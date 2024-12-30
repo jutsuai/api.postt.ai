@@ -6,15 +6,101 @@ const { PDFDocument } = require("pdf-lib");
 
 const router = express.Router();
 
+const data = {
+  createdBy: {
+    name: "John Doe",
+    username: "john-doe",
+    avatar:
+      "https://plus.unsplash.com/premium_photo-1710799499285-06c416d1dd96?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+  },
+
+  //   startSlide: {
+  //     visible: true,
+  //     title: "How to create a carousel post on LinkedIn",
+  //     description: "Learn how to make engaging content.",
+  //     image:
+  //       "https://plus.unsplash.com/premium_photo-1671829480432-9b0f10d869ef?q=80&w=1964&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+  //   },
+
+  slides: [
+    {
+      pageType: "start",
+      visible: true,
+      title: "How to create a carousel post on LinkedIn",
+      description: "Learn how to make engaging content.",
+      image: "https://i.ibb.co.com/1K7VDBQ/bg-light.webp",
+    },
+    {
+      pageType: "slide",
+      curIndex: 1,
+      title: "Slide 1",
+      description: "This is the first slide",
+      image: "https://i.ibb.co.com/1K7VDBQ/bg-light.webp",
+    },
+    {
+      pageType: "slide",
+      curIndex: 2,
+      title: "Slide 2",
+      description: "This is the second slide",
+      image: "https://i.ibb.co.com/1K7VDBQ/bg-light.webp",
+    },
+    {
+      pageType: "slide",
+      curIndex: 3,
+      title: "Slide 3",
+      description: "This is the third slide",
+      image: "https://i.ibb.co.com/1K7VDBQ/bg-light.webp",
+    },
+    {
+      pageType: "end",
+      title: "Thank you for watching!",
+      description: "Follow me for more content",
+      image: "https://i.ibb.co.com/1K7VDBQ/bg-light.webp",
+    },
+  ],
+
+  customizations: {
+    backgroundColor: "#ffffff",
+    fontColor: "#000000",
+    title: {
+      visible: true,
+      horizontal: "center", // left | center | right
+      vertical: "center", // top | center | bottom
+    },
+    description: {
+      visible: true,
+      horizontal: "center", // left | center | right
+      vertical: "center", // top | center | bottom
+    },
+    createdBy: {
+      visible: true,
+      horizontal: "left", // left | center | right
+      vertical: "center", // top | center | bottom
+    },
+  },
+};
+
 router.post("/", async (req, res, next) => {
   try {
-    const urls = [
-      "http://localhost:3000/restricted/linkedin/carousel",
-      "http://localhost:3000/",
-      "http://localhost:3000/restricted/linkedin/carousel",
-      "http://localhost:3000/restricted/linkedin/carousel",
-      "http://localhost:3000/restricted/linkedin/carousel",
-    ];
+    let urls = [];
+
+    data?.slides?.map((slide) => {
+      const params = new URLSearchParams({
+        pageType: slide.pageType,
+        createdBy: JSON.stringify(data.createdBy),
+        customizations: JSON.stringify(data.customizations),
+        curIndex: slide.curIndex,
+        title: slide.title,
+        description: slide.description,
+        image: slide.image,
+      });
+
+      const url = `http://localhost:3000/restricted/linkedin/carousel?${params}`;
+
+      console.log("=========> ", url);
+
+      urls.push(`http://localhost:3000/restricted/linkedin/carousel?${url}`);
+    });
 
     if (urls.some((url) => !url)) {
       return res.status(400).send("Please provide valid website URLs.");
@@ -28,10 +114,10 @@ router.post("/", async (req, res, next) => {
       const page = await browser.newPage();
 
       // Set the viewport size
-      await page.setViewport({ width: 1024, height: 1280 });
+      await page.setViewport({ width: 512, height: 512 * 1.25 });
 
       // Navigate to the website
-      await page.goto(websiteUrl, { waitUntil: "networkidle2" });
+      await page.goto(websiteUrl, { waitUntil: "networkidle0" });
 
       // Take a screenshot
       const screenshotBuffer = await page.screenshot({
