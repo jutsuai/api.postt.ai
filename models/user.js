@@ -3,7 +3,9 @@ const { isEmail } = require("validator");
 
 const UserSchema = new mongoose.Schema(
   {
-    fullName: { type: String, required: true },
+    firstName: { type: String, required: true },
+    lastName: { type: String, required: true },
+    username: { type: String, required: false, unique: true },
     email: {
       type: String,
       required: true,
@@ -26,6 +28,23 @@ const UserSchema = new mongoose.Schema(
     resetPasswordToken: String,
     resetPasswordExpires: Date,
     isActive: { type: Boolean, default: false },
+    accessToken: String,
+
+    // For social login
+    linkedin: {
+      id: String,
+      username: String,
+      email: String,
+      avatar: String,
+
+      tokens: {
+        access_token: String,
+        expires_in: Number,
+        refresh_token: String, // 60 days - 5183999
+        refresh_token_expires_in: Number, // 365 days - 31536059
+        scope: String,
+      },
+    },
   },
   { timestamps: true }
 );

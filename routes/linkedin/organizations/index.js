@@ -5,6 +5,8 @@ const fetchLogoUrl = require("./_components/fetchLogoUrl");
 const { default: axios } = require("axios");
 const router = express.Router();
 
+const LinkedinProfile = require("../../../models/linkedin");
+
 router
   .get("/", async (req, res) => {
     const { accessToken } = req.query;
@@ -27,10 +29,13 @@ router
         urn.split(":").pop()
       );
 
+      console.log("========= Organization IDs:", organizationIds);
+
       // Fetch details and logos for each organization
       const organizations = await Promise.all(
         organizationIds.map(async (id) => {
           const orgDetails = await fetchOrganizationDetails(id, headers);
+          console.log("=========== orgDetails : ", orgDetails);
 
           const logoUrl = await fetchLogoUrl(
             orgDetails.logoV2 ? orgDetails.logoV2.original : null,
@@ -45,6 +50,21 @@ router
 
             // Add other desired fields here
           };
+
+          // Save organization details to MongoDB
+          const linkedinProfile = new LinkedinProfile({
+            createdBy: "admin",
+            profileId: id,
+            type: "organization",
+            name: orgDetails.localizedName,
+            slug: orgDetails.vanityName,
+            avatar: logoUrl,
+            websiteUrl: orgDetails.websiteUrl,
+            linkedinUrl: orgDetails.linkedinUrl,
+            description: orgDetails.description,
+            tags: orgDetails.tags,
+            industries: orgDetails.industries,
+          });
         })
       );
 
@@ -63,26 +83,7 @@ router
       const { orgId } = req.params;
       const { accessToken, content: postContent, sub } = req.body;
 
-      // const postData = {
-      //   // author: `urn:li:person:${sub}`,
-      //   commentary: postContent,
-      //   visibility: "PUBLIC",
-      //   distribution: {
-      //     feedDistribution: "MAIN_FEED",
-      //   },
-      //   lifecycleState: "PUBLISHED",
-      // };
-
       const postData = {
-        author: `urn:li:organization:${orgId}`,
-        // commentary: postContent,
-        // visibility: "PUBLIC",
-        // distribution: {
-        //   feedDistribution: "MAIN_FEED",
-        //   targetEntities: [],
-        //   thirdPartyDistributionChannels: [],
-        // },
-        // isReshareDisabledByAuthor: false,
         author: `urn:li:organization:${orgId}`,
         commentary: postContent,
         visibility: "PUBLIC",
@@ -93,19 +94,6 @@ router
         },
         lifecycleState: "PUBLISHED",
         isReshareDisabledByAuthor: false,
-
-        // lifecycleState: "PUBLISHED",
-        // specificContent: {
-        //   "com.linkedin.ugc.ShareContent": {
-        //     shareCommentary: {
-        //       text: postContent,
-        //     },
-        //     shareMediaCategory: "NONE",
-        //   },
-        // },
-        // visibility: {
-        //   "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC",
-        // },
       };
 
       const response = await axios.post(
