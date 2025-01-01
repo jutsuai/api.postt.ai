@@ -22,6 +22,9 @@ const getAccessToken = (userId) =>
 
 async function saveAccessToken(newUser) {
   const accessToken = getAccessToken(newUser._id);
+
+  console.log("=====> accessToken ", accessToken);
+
   newUser.accessToken = accessToken;
   await newUser.save();
 
@@ -39,22 +42,25 @@ router
 
       if (!user) {
         // return next(new Error("Email does not exist"));
-        return res.status(200).send({ status: "Email does not exist" });
+        return res.status(404).send({ status: "Email does not exist" });
       }
 
       const validPassword = await validatePassword(password, user.password);
 
       if (!validPassword) {
         // return next(new Error("Password is not correct"));
-        return res.status(200).send({ status: "Password is not correct" });
+        return res.status(404).send({ status: "Password is not correct" });
       }
 
       if (!user.isActive) {
-        return res.status(200).send({ status: "Your account is not Active" });
+        return res.status(404).send({ status: "Your account is not Active" });
       }
+      console.log("=====> ", user);
 
       //   const accessToken = getAccessToken(user._id);
       const updatedUser = await saveAccessToken(user);
+
+      console.log("=====> ", updatedUser);
 
       //   return res.status(200).json({ ...user.toObject(), accessToken });
       return res.status(200).json(updatedUser);
@@ -86,6 +92,7 @@ router
         lastName,
         email,
         password: hashedPassword,
+        isActive: true,
       });
 
       const profile = new UserProfile({
