@@ -5,7 +5,7 @@ const fetchLogoUrl = require("./_components/fetchLogoUrl");
 const { default: axios } = require("axios");
 const router = express.Router();
 
-const LinkedinProfile = require("../../../models/linkedin");
+const LinkedinProfile = require("../../../models/linkedin/linkedinProfile");
 
 router
   .get("/", async (req, res) => {

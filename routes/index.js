@@ -12,6 +12,8 @@ router.use("/linkedinOld", linkedinOld);
 
 router.use("/linkedin/organizations", require("./linkedin/organizations"));
 
-router.use("/generators/carousel", require("./generators/carousel"));
+// carousel routes
+router.use("/create/carousel", require("./create/carousel/index"));
+router.use("/create/carousel/generate", require("./create/carousel/generate"));
 
 module.exports = router;
