@@ -2,7 +2,9 @@ import { Schema, model } from "mongoose";
 
 interface IUserProfile {
   createdBy: any;
+  type: string;
   name: string;
+  description: string;
   targetAudience: string;
   industry: string;
   valueProposition: string;
@@ -26,22 +28,27 @@ interface IUserProfile {
 const UserProfileSchema = new Schema<IUserProfile>({
   createdBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
 
+  type: {
+    type: String,
+    enum: ["personal", "business"],
+    default: "personal",
+  },
+
   // Basic Information
   name: {
     type: String,
-    required: true,
+  },
+  description: {
+    type: String, // e.g., "We help startups grow their online presence
   },
   targetAudience: {
     type: String, // e.g., "Young professionals in tech"
-    required: true,
   },
   industry: {
     type: String,
-    required: true,
   },
   valueProposition: {
     type: String, // e.g., "Affordable, eco-friendly solutions for startups"
-    required: true,
   },
 
   // Branding

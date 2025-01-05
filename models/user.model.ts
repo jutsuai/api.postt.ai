@@ -15,12 +15,21 @@ interface IUser {
 
   linkedinId: string;
   tokens: {
-    access_token: string;
-    expires_in: number;
-    refresh_token: string;
-    refresh_token_expires_in: number;
-    scope: string;
+    auth: {
+      access_token: string;
+      expires_in: number;
+      scope: string;
+    };
+    management: {
+      access_token: string;
+      expires_in: number;
+      refresh_token: string;
+      refresh_token_expires_in: number;
+      scope: string;
+    };
   };
+
+  onboarding: object;
 }
 
 interface IUserDoc extends IUser, Document {
@@ -49,12 +58,21 @@ const userSchema = new Schema<IUserDoc>(
 
     linkedinId: { type: String, required: false },
     tokens: {
-      access_token: { type: String },
-      expires_in: { type: Number },
-      refresh_token: { type: String },
-      refresh_token_expires_in: { type: Number },
-      scope: { type: String },
+      auth: {
+        access_token: { type: String },
+        expires_in: { type: Number },
+        scope: { type: String },
+      },
+      management: {
+        access_token: { type: String },
+        expires_in: { type: Number },
+        refresh_token: { type: String },
+        refresh_token_expires_in: { type: Number },
+        scope: { type: String },
+      },
     },
+
+    onboarding: { type: Object, default: {} },
   },
   {
     timestamps: true,

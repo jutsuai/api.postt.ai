@@ -1,15 +1,15 @@
 import { Context } from "hono";
-import { User, UserLinkedInCredentials } from "../models";
+import { User } from "../models";
 import { genToken } from "../utils";
 // import { LinkedInApiClient } from "linkedin-api-client";
 
 import { AuthClient, RestliClient } from "linkedin-api-client";
 
 const authClient = new AuthClient({
-  clientId: process.env.LINKEDIN_CLIENT_ID,
-  clientSecret: process.env.LINKEDIN_CLIENT_SECRET,
-  redirectUrl: process.env.LINKEDIN_REDIRECT_URI,
-});
+  clientId: process.env.LINKEDIN_AUTH_CLIENT_ID,
+  clientSecret: process.env.LINKEDIN_AUTH_CLIENT_SECRET,
+  redirectUrl: process.env.LINKEDIN_AUTH_REDIRECT_URI,
+} as any);
 const restliClient = new RestliClient();
 
 /**
@@ -185,11 +185,10 @@ export const linkedinCallback = async (c: Context) => {
         { linkedinId: liUser?.id },
         {
           $set: {
-            tokens: {
+            avatar: liUser?.picture,
+            "tokens.auth": {
               access_token: tokenDetails.access_token,
               expires_in: tokenDetails.expires_in,
-              refresh_token: tokenDetails.refresh_token,
-              refresh_token_expires_in: tokenDetails.refresh_token_expires_in,
               scope: tokenDetails.scope,
             },
           },
@@ -205,6 +204,7 @@ export const linkedinCallback = async (c: Context) => {
       });
     }
 
+    // create new user
     const user = await User.create({
       linkedinId: liUser?.id || liUser?.sub,
       username: liUser?.vanityName,
@@ -212,17 +212,17 @@ export const linkedinCallback = async (c: Context) => {
       lastName: liUser?.localizedLastName || liUser?.family_name || "",
       email: liUser?.email,
       role: "user",
+      avatar: liUser?.picture,
 
       isActive: true,
       tokens: {
-        access_token: tokenDetails.access_token,
-        expires_in: tokenDetails.expires_in,
-        refresh_token: tokenDetails.refresh_token,
-        refresh_token_expires_in: tokenDetails.refresh_token_expires_in,
-        scope: tokenDetails.scope,
+        auth: {
+          access_token: tokenDetails.access_token,
+          expires_in: tokenDetails.expires_in,
+          scope: tokenDetails.scope,
+        },
       },
     });
-
     const token = await genToken(user._id.toString());
 
     return c.json({
@@ -242,22 +242,6 @@ export const linkedinCallback = async (c: Context) => {
       data: err,
     });
   }
-};
-
-export const linkedinRefreshToken = async (c: Context) => {
-  const { refreshToken } = await c.req.json();
-
-  const tokenDetails =
-    authClient.exchangeRefreshTokenForAccessToken(refreshToken);
-
-  console.log("linkedinRefreshToken : ", tokenDetails);
-
-  return c.json({
-    status: 200,
-    success: true,
-    data: tokenDetails,
-    message: "Linkedin refresh token",
-  });
 };
 
 /**
