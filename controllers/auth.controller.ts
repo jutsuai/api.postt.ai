@@ -174,25 +174,12 @@ export const linkedinCallback = async (c: Context) => {
     console.log("linkedinCallback : ", liUser);
 
     // Check for existing user
-    const userExists = await User.findOne({ linkedinId: liUser?.id });
+    const userExists = await User.findOne({
+      linkedinId: liUser?.id || liUser?.sub,
+    });
 
     if (userExists) {
       const token = await genToken(userExists._id.toString());
-
-      // await UserLinkedInCredentials.updateOne(
-      //   { userId: userExists._id },
-      //   {
-      //     $set: {
-      //       tokens: {
-      //         access_token: tokenDetails.access_token,
-      //         expires_in: tokenDetails.expires_in,
-      //         refresh_token: tokenDetails.refresh_token,
-      //         refresh_token_expires_in: tokenDetails.refresh_token_expires_in,
-      //         scope: tokenDetails.scope,
-      //       },
-      //     },
-      //   }
-      // );
 
       await User.updateOne(
         { linkedinId: liUser?.id },
@@ -212,17 +199,18 @@ export const linkedinCallback = async (c: Context) => {
       return c.json({
         status: 200,
         success: true,
-        data: tokenDetails,
+        data: userExists,
         token,
         message: "User logged in successfully",
       });
     }
 
     const user = await User.create({
-      linkedinId: liUser?.id,
+      linkedinId: liUser?.id || liUser?.sub,
       username: liUser?.vanityName,
-      firstName: liUser?.localizedFirstName,
-      lastName: liUser?.localizedLastName,
+      firstName: liUser?.localizedFirstName || liUser?.given_name || "",
+      lastName: liUser?.localizedLastName || liUser?.family_name || "",
+      email: liUser?.email,
       role: "user",
 
       isActive: true,
@@ -235,14 +223,17 @@ export const linkedinCallback = async (c: Context) => {
       },
     });
 
+    const token = await genToken(user._id.toString());
+
     return c.json({
       status: 200,
       success: true,
       data: user,
       message: "Linkedin callback",
+      token,
     });
   } catch (err: any) {
-    console.log("linkedinCallback : ", err);
+    console.log("linkedinCallback : ", err.message);
 
     return c.status(err.status).json({
       status: 400,

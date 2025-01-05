@@ -1,5 +1,5 @@
 {
-  "name": "jutsu-bun-hono-api-starter",
+  "name": "api.post.ai",
   "module": "server.ts",
   "type": "module",
   "scripts": {
