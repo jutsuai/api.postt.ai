@@ -4,7 +4,7 @@ interface IUser {
   avatar: string;
   firstName: string;
   lastName: string;
-  username: string;
+  username?: string;
   email: string;
   password: string;
   role: string;
@@ -41,7 +41,7 @@ const userSchema = new Schema<IUserDoc>(
     avatar: { type: String, required: false },
     firstName: { type: String, required: true },
     lastName: { type: String, required: true },
-    username: { type: String, required: false, unique: true },
+    username: { type: String, required: false, unique: false },
     email: { type: String, required: false, unique: true },
     password: { type: String, required: false },
 

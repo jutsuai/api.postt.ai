@@ -10,7 +10,7 @@ const saveOrganizationDetails = async (orgDetails: any, userId: string) => {
       slug: orgDetails?.vanityName,
       logo: orgDetails?.logoV2?.original,
       cover: orgDetails?.coverV2?.original,
-      description: orgDetails?.description,
+      description: orgDetails?.localizedDescription,
       websiteUrl: orgDetails?.websiteUrl,
       linkedinUrl: `https://www.linkedin.com/company/${orgDetails?.vanityName}`,
       tags: orgDetails?.tags,
