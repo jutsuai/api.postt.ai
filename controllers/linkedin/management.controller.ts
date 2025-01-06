@@ -1,6 +1,7 @@
 import { Context } from "hono";
-import { LinkedinProfile, User } from "../../models";
+import axios from "axios";
 
+import { LinkedinProfile, User } from "../../models";
 import { AuthClient, RestliClient } from "linkedin-api-client";
 import fetchOrganizationUrns from "../../components/fetchOrganizationUrns";
 import fetchOrganizationDetails from "../../components/fetchOrganizationDetails";
@@ -108,6 +109,70 @@ export const linkedinRefreshToken = async (c: Context) => {
     data: tokenDetails,
     message: "Linkedin refresh token",
   });
+};
+
+/**
+ * @api {get} /api/v1/management/user Get User Details
+ * @apiGroup Management
+ * @access private
+ */
+export const getUserDetails = async (ctx: Context) => {
+  const user = await ctx.get("user");
+
+  const accessToken =
+    user.tokens.management.access_token || user.tokens.auth.access_token;
+
+  const headers = {
+    Authorization: `Bearer ${accessToken}`,
+    "X-Restli-Protocol-Version": "2.0.0",
+  };
+  const url = "https://api.linkedin.com/v2/me";
+  // const params = { q: "roleAssignee", state: "APPROVED" };
+
+  try {
+    const { data } = await axios.get(url, { headers });
+
+    console.log("getUserDetails : ", data);
+
+    const linkedinProfile = await LinkedinProfile.create({
+      createdBy: user?._id,
+
+      type: "person",
+      linkedinId: data?.id,
+      name: `${data?.localizedFirstName} ${data?.localizedLastName}`,
+
+      slug: data?.vanityName,
+      logo: data?.profilePicture?.displayImage,
+
+      description: data?.localizedHeadline,
+      linkedinUrl: `https://www.linkedin.com/in/${data?.vanityName}`,
+      // cover: data?.coverV2?.original,
+      // websiteUrl: data?.websiteUrl,
+      // tags: data?.tags,
+      // industries: data?.industries,
+    });
+
+    return ctx.json(
+      {
+        status: 200,
+        success: true,
+        data: linkedinProfile,
+        message: "User details fetched successfully",
+      },
+      200
+    );
+  } catch (error: any) {
+    console.error("Error in getUserDetails:", error.response?.data);
+
+    return ctx.json(
+      {
+        status: 500,
+        success: false,
+        message: "Failed to fetch user details",
+      },
+      500
+    );
+  }
 };
 
 /**

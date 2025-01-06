@@ -24,7 +24,7 @@ const LinkedinProfileSchema = new Schema<ILinkedinProfile>(
       required: true,
     }, // Profile type
 
-    linkedinId: { type: String, required: true }, // Unique LinkedIn profile ID
+    linkedinId: { type: String, required: true, unique: true }, // Unique LinkedIn profile ID
     name: { type: String, required: true }, // Name
     slug: { type: String, required: true }, // Slug
     logo: String, // Avatar URL

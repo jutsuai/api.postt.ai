@@ -18,6 +18,11 @@ management.post("/refresh", protect, (c) =>
   linkedinManagementController.linkedinRefreshToken(c)
 );
 
+// Get User Details
+management.get("/user", protect, (c) =>
+  linkedinManagementController.getUserDetails(c)
+);
+
 // Get Organization List for DB
 management.get("/organizationList", protect, (c) =>
   linkedinManagementController.getOrganizationListFormDB(c)
