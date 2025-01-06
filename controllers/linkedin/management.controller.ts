@@ -5,6 +5,7 @@ import { AuthClient, RestliClient } from "linkedin-api-client";
 import fetchOrganizationUrns from "../../components/fetchOrganizationUrns";
 import fetchOrganizationDetails from "../../components/fetchOrganizationDetails";
 import fetchLogoUrl from "../../components/fetchLogoUrl";
+import saveOrganizationDetails from "../../components/saveOrganizationDetails";
 
 const authClient = new AuthClient({
   clientId: process.env.LINKEDIN_MANAGEMENT_CLIENT_ID,
@@ -115,78 +116,81 @@ export const linkedinRefreshToken = async (c: Context) => {
  * @access private
  */
 export const getOrganizationList = async (ctx: Context) => {
-  const user = await ctx.get("user");
-  const accessToken =
-    user.tokens.management.access_token || user.tokens.auth.access_token;
-
-  // console.log(
-  //   "getOrganizationList : user : ",
-  //   user.tokens.management.access_token
-  // );
-
-  const headers = {
-    Authorization: `Bearer ${accessToken}`,
-    "X-Restli-Protocol-Version": "2.0.0",
-  };
-
   try {
-    // Fetch organization URNs
-    const getOrganizationUrns = await fetchOrganizationUrns(accessToken);
+    const user = await ctx.get("user");
+    const accessToken =
+      user.tokens.management.access_token || user.tokens.auth.access_token;
 
-    // Extract organization IDs from URNs
-    const organizationIds = getOrganizationUrns.map((urn: any) =>
+    const headers = {
+      Authorization: `Bearer ${accessToken}`,
+      "X-Restli-Protocol-Version": "2.0.0",
+    };
+
+    // Step 1: Fetch organization URNs
+    const { data: organizationUrns, error } = await fetchOrganizationUrns(
+      accessToken
+    );
+
+    if (error) {
+      console.error("Failed to fetch organization URNs:", error);
+
+      return ctx.json(error, 500);
+    }
+
+    console.log("organizationUrns : ", organizationUrns);
+
+    // Step 2: Extract organization IDs
+    const organizationIds = organizationUrns.map((urn: any) =>
       urn.split(":").pop()
     );
 
-    // Fetch details and logos for each organization
-    const organizations = await Promise.all(
+    // Step 3: Fetch organization details
+    const organizations = await Promise.allSettled(
       organizationIds.map(async (id: any) => {
-        console.log("============= id : ", id);
+        try {
+          const { data: orgDetails, error } = await fetchOrganizationDetails(
+            id,
+            headers
+          );
 
-        const orgDetails = await fetchOrganizationDetails(id, headers);
-        console.log("============= orgDetails : ", orgDetails);
+          if (error) {
+            console.error(
+              `Failed to fetch details for organization ID ${id}:`,
+              error
+            );
 
-        // const logoUrl = await fetchLogoUrl(
-        //   orgDetails.logoV2 ? orgDetails.logoV2.original : null,
-        //   headers
-        // );
+            return null;
+          }
 
-        const linkedinProfile = await LinkedinProfile.create({
-          createdBy: user._id,
-          type: "organization",
-
-          linkedinId: orgDetails?.id,
-          name: orgDetails?.localizedName,
-          slug: orgDetails?.vanityName,
-          logo: orgDetails?.logoV2?.original,
-          cover: orgDetails?.coverV2?.original,
-          description: orgDetails?.description,
-          websiteUrl: orgDetails?.websiteUrl,
-          linkedinUrl: `https://www.linkedin.com/company/${orgDetails?.vanityName}`,
-          tags: orgDetails?.tags,
-          industries: orgDetails?.industries,
-        });
-
-        return linkedinProfile;
+          return await saveOrganizationDetails(orgDetails, user._id);
+        } catch (error) {
+          console.error(`Failed to process organization ID ${id}:`, error);
+          return null; // Skip if one organization fails
+        }
       })
     );
+
+    // Filter out failed results
+    const successfulOrganizations = organizations
+      .filter((result) => result.status === "fulfilled")
+      .map((result: any) => result.value);
 
     return ctx.json({
       status: 200,
       success: true,
-      data: organizations,
+      data: successfulOrganizations,
       message: "Organization list fetched successfully",
     });
-  } catch (e) {
-    console.log("organizationList : error : ", e);
+  } catch (error) {
+    console.error("Error in getOrganizationList:", error);
 
     return ctx.json(
       {
-        status: 400,
+        status: 500,
         success: false,
-        message: "Failed to get organization list",
+        message: "Failed to fetch organization list",
       },
-      400
+      500
     );
   }
 };

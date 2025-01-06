@@ -40,4 +40,4 @@ const fetchLogoUrl = async (logoUrn, headers) => {
   }
 };
 
-module.exports = fetchLogoUrl;
+export default fetchLogoUrl;
