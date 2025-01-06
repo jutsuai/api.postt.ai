@@ -32,7 +32,7 @@ interface IUser {
   onboarding: object;
 }
 
-interface IUserDoc extends IUser, Document {
+export interface IUserDoc extends IUser, Document {
   mathPassword: (pass: string) => Promise<boolean>;
 }
 

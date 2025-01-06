@@ -1,7 +1,10 @@
 import { Context } from "hono";
-import { User } from "../../models";
+import { LinkedinProfile, User } from "../../models";
 
 import { AuthClient, RestliClient } from "linkedin-api-client";
+import fetchOrganizationUrns from "../../components/fetchOrganizationUrns";
+import fetchOrganizationDetails from "../../components/fetchOrganizationDetails";
+import fetchLogoUrl from "../../components/fetchLogoUrl";
 
 const authClient = new AuthClient({
   clientId: process.env.LINKEDIN_MANAGEMENT_CLIENT_ID,
@@ -98,8 +101,6 @@ export const linkedinRefreshToken = async (c: Context) => {
   const tokenDetails =
     authClient.exchangeRefreshTokenForAccessToken(refreshToken);
 
-  console.log("linkedinRefreshToken : ", tokenDetails);
-
   return c.json({
     status: 200,
     success: true,
@@ -115,28 +116,70 @@ export const linkedinRefreshToken = async (c: Context) => {
  */
 export const getOrganizationList = async (ctx: Context) => {
   const user = await ctx.get("user");
-  console.log(
-    "getOrganizationList : user : ",
-    user.tokens.management.access_token
-  );
+  const accessToken =
+    user.tokens.management.access_token || user.tokens.auth.access_token;
+
+  // console.log(
+  //   "getOrganizationList : user : ",
+  //   user.tokens.management.access_token
+  // );
+
+  const headers = {
+    Authorization: `Bearer ${accessToken}`,
+    "X-Restli-Protocol-Version": "2.0.0",
+  };
+
   try {
-    const { data: organizationList } = await restliClient.get({
-      resourcePath: "/organizationAcls",
-      accessToken: user.tokens.management.access_token,
+    // Fetch organization URNs
+    const getOrganizationUrns = await fetchOrganizationUrns(accessToken);
 
-      queryParams: {
-        q: "roleAssignee",
-        state: "APPROVED",
-      },
+    // Extract organization IDs from URNs
+    const organizationIds = getOrganizationUrns.map((urn: any) =>
+      urn.split(":").pop()
+    );
+
+    // Fetch details and logos for each organization
+    const organizations = await Promise.all(
+      organizationIds.map(async (id: any) => {
+        console.log("============= id : ", id);
+
+        const orgDetails = await fetchOrganizationDetails(id, headers);
+        console.log("============= orgDetails : ", orgDetails);
+
+        // const logoUrl = await fetchLogoUrl(
+        //   orgDetails.logoV2 ? orgDetails.logoV2.original : null,
+        //   headers
+        // );
+
+        const linkedinProfile = await LinkedinProfile.create({
+          createdBy: user._id,
+          type: "organization",
+
+          linkedinId: orgDetails?.id,
+          name: orgDetails?.localizedName,
+          slug: orgDetails?.vanityName,
+          logo: orgDetails?.logoV2?.original,
+          cover: orgDetails?.coverV2?.original,
+          description: orgDetails?.description,
+          websiteUrl: orgDetails?.websiteUrl,
+          linkedinUrl: `https://www.linkedin.com/company/${orgDetails?.vanityName}`,
+          tags: orgDetails?.tags,
+          industries: orgDetails?.industries,
+        });
+
+        return linkedinProfile;
+      })
+    );
+
+    return ctx.json({
+      status: 200,
+      success: true,
+      data: organizations,
+      message: "Organization list fetched successfully",
     });
-
-    console.log("organizationList : ", organizationList);
   } catch (e) {
     console.log("organizationList : error : ", e);
-    console.log(
-      "getOrganizationList : user : ",
-      user.tokens.management.access_token
-    );
+
     return ctx.json(
       {
         status: 400,

@@ -24,13 +24,22 @@ export const getUsers = async (c: Context) => {
  */
 
 export const getUserById = async (c: Context | any) => {
-  const user = await User.findById(c.params.id);
+  try {
+    const { id } = await c.req.param();
+    const user = await User.findById(id);
 
-  return c.json({
-    success: true,
-    data: user,
-    message: "User fetched successfully",
-  });
+    return c.json({
+      success: true,
+      data: user,
+      message: "User fetched successfully",
+    });
+  } catch (error: any) {
+    return c.status(error.status).json({
+      success: false,
+      data: error,
+      message: "User not found",
+    });
+  }
 };
 
 /**

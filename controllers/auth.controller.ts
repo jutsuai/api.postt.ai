@@ -51,7 +51,7 @@ export const signupUser = async (c: Context) => {
     throw new Error("User already exists");
   }
 
-  const user = await User.create({
+  const user = (await User.create({
     firstName,
     lastName,
     username,
@@ -59,7 +59,7 @@ export const signupUser = async (c: Context) => {
     password,
     role,
     isActive,
-  });
+  })) as any;
 
   if (!user) {
     c.status(400);
