@@ -207,7 +207,7 @@ export const linkedinCallback = async (c: Context) => {
     // create new user
     const user = await User.create({
       linkedinId: liUser?.id || liUser?.sub,
-      username: liUser?.vanityName,
+      // username: liUser?.vanityName,
       firstName: liUser?.localizedFirstName || liUser?.given_name || "",
       lastName: liUser?.localizedLastName || liUser?.family_name || "",
       email: liUser?.email,
