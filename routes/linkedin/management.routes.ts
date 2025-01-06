@@ -18,9 +18,14 @@ management.post("/refresh", protect, (c) =>
   linkedinManagementController.linkedinRefreshToken(c)
 );
 
-// Get Organization List
+// Get Organization List for DB
+management.get("/organizationList", protect, (c) =>
+  linkedinManagementController.getOrganizationListFormDB(c)
+);
+
+// Get Organization List for Linkedin
 management.post("/organizationList", protect, (c) =>
-  linkedinManagementController.getOrganizationList(c)
+  linkedinManagementController.getOrganizationListFormLinkedin(c)
 );
 
 export default management;

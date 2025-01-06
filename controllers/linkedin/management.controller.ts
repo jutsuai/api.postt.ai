@@ -111,11 +111,42 @@ export const linkedinRefreshToken = async (c: Context) => {
 };
 
 /**
- * @api {post} /api/v1/management/organizationList Get Organization List
+ * @api {get} /api/v1/management/organizationList Get Organization List form DB
  * @apiGroup Management
  * @access private
  */
-export const getOrganizationList = async (ctx: Context) => {
+export const getOrganizationListFormDB = async (ctx: Context) => {
+  try {
+    const userId = await ctx.get("user")?._id;
+
+    const organizations = await LinkedinProfile.find({ createdBy: userId });
+
+    return ctx.json({
+      status: 200,
+      success: true,
+      data: organizations,
+      message: "Organization list fetched successfully",
+    });
+  } catch (error) {
+    console.error("Error in getOrganizationList:", error);
+
+    return ctx.json(
+      {
+        status: 500,
+        success: false,
+        message: "Failed to fetch organization list",
+      },
+      500
+    );
+  }
+};
+
+/**
+ * @api {post} /api/v1/management/organizationList Get Organization List  form Linkedin
+ * @apiGroup Management
+ * @access private
+ */
+export const getOrganizationListFormLinkedin = async (ctx: Context) => {
   try {
     const user = await ctx.get("user");
     const accessToken =
