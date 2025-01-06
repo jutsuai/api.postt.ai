@@ -205,7 +205,7 @@ export const linkedinCallback = async (c: Context) => {
     }
 
     // create new user
-    const user = await User.create({
+    const user = (await User.create({
       linkedinId: liUser?.id || liUser?.sub,
       // username: liUser?.vanityName,
       firstName: liUser?.localizedFirstName || liUser?.given_name || "",
@@ -222,7 +222,7 @@ export const linkedinCallback = async (c: Context) => {
           scope: tokenDetails.scope,
         },
       },
-    });
+    })) as any;
     const token = await genToken(user._id.toString());
 
     return c.json({
