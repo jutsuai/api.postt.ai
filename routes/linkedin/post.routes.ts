@@ -4,9 +4,12 @@ import { protect } from "../../middlewares";
 
 const post = new Hono();
 
+// Linkedin Post
+post.get("/:orgId/post", protect, (c) => linkedinPostController.getAllPost(c));
+
 // text post
 post.post("/:orgId/post/text", protect, (c) =>
-  linkedinPostController.linkedinTextPost(c)
+  linkedinPostController.createTextPost(c)
 );
 
 // // Linkedin Callback
