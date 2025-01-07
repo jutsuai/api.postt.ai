@@ -4,7 +4,7 @@ import { prettyJSON } from "hono/pretty-json";
 import { cors } from "hono/cors";
 //
 import connectDB from "./config/db";
-import { Users, Auth, LinkedinManagement } from "./routes";
+import { Users, Auth, LinkedinManagement, LinkedinPost } from "./routes";
 import { errorHandler, notFound } from "./middlewares";
 
 // Initialize the Hono app
@@ -31,6 +31,8 @@ app.get("/", (c) => c.text("live!"));
 // API Routes
 app.route("/auth", Auth);
 app.route("/users", Users);
+app.route("/linkedin", LinkedinPost);
+
 app.route("/linkedin/management", LinkedinManagement);
 
 // Error Handler
