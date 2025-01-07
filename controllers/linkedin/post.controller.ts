@@ -43,11 +43,14 @@ export const getAllPost = async (ctx: Context) => {
       .get(url, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
+          "LinkedIn-Version": process.env.LINKEDIN_API_VERSION,
+          "Content-Type": "application/json",
         },
 
         params: {
           q: "authors",
-          authors: organizationId,
+          // authors: organizationId, // Use URN format
+          authors: `List(urn:li:organization:91137041)`,
           start: 0,
           count: 10,
         },
