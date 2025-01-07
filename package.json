@@ -1,37 +1,22 @@
 {
-  "name": "noven-api",
-  "version": "1.0.0",
-  "description": "Noven Platform Backend API",
-  "main": "handler.js",
+  "name": "api.post.ai",
+  "module": "server.ts",
+  "type": "module",
   "scripts": {
-    "deploy": "sls deploy --stage production",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon server.js"
+    "start": "bun run server.ts",
+    "dev": "bun --hot run server.ts"
   },
-  "keywords": [
-    "Noven"
-  ],
-  "author": "Saidul Badhon",
-  "license": "Unlicense",
+  "devDependencies": {
+    "bun-types": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
   "dependencies": {
-    "@sendgrid/mail": "^7.6.0",
-    "aws-sdk": "^2.936.0",
-    "axios": "^0.21.4",
-    "bcryptjs-then": "^1.0.1",
-    "cors": "^2.8.5",
-    "crypto": "^1.0.1",
-    "dotenv": "^10.0.0",
-    "express": "^4.17.1",
-    "helmet": "^4.6.0",
-    "jsonwebtoken": "^8.5.1",
-    "moment": "^2.29.1",
-    "mongoose": "^5.13.12",
-    "morgan": "^1.10.0",
-    "multer": "^1.4.5-lts.1",
-    "nodemon": "^3.1.7",
+    "hono": "^4.6.15",
+    "linkedin-api-client": "^0.3.0",
+    "mongoose": "^8.9.3",
     "pdf-lib": "^1.17.1",
-    "puppeteer": "^23.11.1",
-    "serverless-http": "^2.7.0",
-    "validator": "^13.6.0"
+    "puppeteer": "^23.11.1"
   }
 }

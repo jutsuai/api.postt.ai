@@ -88,83 +88,83 @@ router
 
     try {
       // Step 1: Register the upload
-      // const registerResponse = await axios.post(
-      //   "https://api.linkedin.com/rest/documents?action=initializeUpload",
-      //   {
-      //     initializeUploadRequest: {
-      //       owner: `urn:li:person:${sub}`,
-      //     },
-      //   },
-      //   {
-      //     headers: {
-      //       Authorization: `Bearer ${accessToken}`,
-      // "LinkedIn-Version": process.env.LINKEDIN_API_VERSION,
-      //       "X-RestLi-Protocol-Version": "2.0.0",
-      //       "Content-Type": "application/json",
-      //     },
-      //   }
-      // );
-
-      // const { uploadUrl, document } = registerResponse.data.value;
-
-      // console.log(
-      //   "-------------------------- registerResponse.data : ",
-      //   registerResponse.data
-      // );
-
-      // // Step 2: Upload the document
-      // await axios.put(uploadUrl, file.buffer, {
-      //   headers: {
-      //     "Content-Type": file.mimetype,
-      //   },
-      // });
-
-      // Step 3: Create the post
-      // const postData = {
-      //   author: `urn:li:person:${sub}`,
-      //   commentary: postContent,
-      //   visibility: "PUBLIC",
-      //   distribution: {
-      //     feedDistribution: "MAIN_FEED",
-      //     targetEntities: [],
-      //     thirdPartyDistributionChannels: [],
-      //   },
-      //   content: {
-      //     media: {
-      //       title: file?.originalname,
-      //       id: document,
-      //     },
-      //   },
-      //   lifecycleState: "PUBLISHED",
-      //   isReshareDisabledByAuthor: false,
-      // };
-      const postData = {
-        author: `urn:li:person:${sub}`,
-        lifecycleState: "PUBLISHED",
-        specificContent: {
-          "com.linkedin.ugc.ShareContent": {
-            shareCommentary: {
-              text: post,
-            },
-            shareMediaCategory: "ARTICLE",
-            media: [
-              {
-                status: "READY",
-                description: {
-                  text: post,
-                },
-                originalUrl: "https://dokan.gg",
-                title: {
-                  text: "This is a title for an Article post",
-                },
-              },
-            ],
+      const registerResponse = await axios.post(
+        "https://api.linkedin.com/rest/documents?action=initializeUpload",
+        {
+          initializeUploadRequest: {
+            owner: `urn:li:person:${sub}`,
           },
         },
-        visibility: {
-          "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC",
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "LinkedIn-Version": process.env.LINKEDIN_API_VERSION,
+            "X-RestLi-Protocol-Version": "2.0.0",
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const { uploadUrl, document } = registerResponse.data.value;
+
+      console.log(
+        "-------------------------- registerResponse.data : ",
+        registerResponse.data
+      );
+
+      // Step 2: Upload the document
+      await axios.put(uploadUrl, file.buffer, {
+        headers: {
+          "Content-Type": file.mimetype,
         },
+      });
+
+      // Step 3: Create the post
+      const postData = {
+        author: `urn:li:person:${sub}`,
+        commentary: postContent,
+        visibility: "PUBLIC",
+        distribution: {
+          feedDistribution: "MAIN_FEED",
+          targetEntities: [],
+          thirdPartyDistributionChannels: [],
+        },
+        content: {
+          media: {
+            title: file?.originalname,
+            id: document,
+          },
+        },
+        lifecycleState: "PUBLISHED",
+        isReshareDisabledByAuthor: false,
       };
+      // const postData = {
+      //   author: `urn:li:person:${sub}`,
+      //   lifecycleState: "PUBLISHED",
+      //   specificContent: {
+      //     "com.linkedin.ugc.ShareContent": {
+      //       shareCommentary: {
+      //         text: post,
+      //       },
+      //       shareMediaCategory: "ARTICLE",
+      //       media: [
+      //         {
+      //           status: "READY",
+      //           description: {
+      //             text: post,
+      //           },
+      //           originalUrl: "https://dokan.gg",
+      //           title: {
+      //             text: "This is a title for an Article post",
+      //           },
+      //         },
+      //       ],
+      //     },
+      //   },
+      //   visibility: {
+      //     "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC",
+      //   },
+      // };
 
       await axios
         .post("https://api.linkedin.com/v2/ugcPosts", postData, {
