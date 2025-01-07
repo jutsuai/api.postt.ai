@@ -121,18 +121,6 @@ export const loginUser = async (c: Context) => {
 
 export const linkedinLogin = async (c: Context) => {
   const scopes = ["openid", "profile", "w_member_social", "email"];
-  // const scopes = [
-  //   "r_organization_followers",
-  //   "r_organization_social",
-  //   "rw_organization_admin",
-  //   "r_organization_social_feed",
-  //   "w_member_social",
-  //   "w_organization_social",
-  //   "r_basicprofile",
-  //   "w_organization_social_feed",
-  //   "w_member_social_feed",
-  //   "r_1st_connections_size",
-  // ];
 
   const state = process.env.NODE_ENV;
 

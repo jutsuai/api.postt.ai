@@ -15,9 +15,6 @@ auth.get("/linkedin", (c) => authController.linkedinLogin(c));
 // Linkedin Callback
 auth.post("/linkedin/callback", (c) => authController.linkedinCallback(c));
 
-// // Linkedin Refresh Token
-// auth.post("/linkedin/refresh", (c) => authController.linkedinRefreshToken(c));
-
 // Logout
 auth.get("/logout", (c) => authController.logoutUser(c));
 
