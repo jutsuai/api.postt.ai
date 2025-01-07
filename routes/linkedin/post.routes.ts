@@ -4,12 +4,28 @@ import { protect } from "../../middlewares";
 
 const post = new Hono();
 
+post.get("/carousel/:carouselId", (c) =>
+  linkedinPostController.getCarouselById(c)
+);
+
 // Linkedin Post
-post.get("/:orgId/post", protect, (c) => linkedinPostController.getAllPost(c));
+post.get("/:linkedinId/post", protect, (c) =>
+  linkedinPostController.getAllPost(c)
+);
 
 // text post
-post.post("/:orgId/post/text", protect, (c) =>
+post.post("/:linkedinId/post/text", protect, (c) =>
   linkedinPostController.createTextPost(c)
+);
+
+// // image post
+// post.post("/:linkedinId/post/image", protect, (c) =>
+//   linkedinPostController.createImagePost(c)
+// );
+
+// carousel post
+post.post("/:linkedinId/post/carousel", protect, (c) =>
+  linkedinPostController.createCarouselPost(c)
 );
 
 // // Linkedin Callback

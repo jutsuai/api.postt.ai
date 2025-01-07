@@ -4,7 +4,13 @@ import { prettyJSON } from "hono/pretty-json";
 import { cors } from "hono/cors";
 //
 import connectDB from "./config/db";
-import { Users, Auth, LinkedinManagement, LinkedinPost } from "./routes";
+import {
+  Users,
+  Auth,
+  LinkedinManagement,
+  LinkedinPost,
+  postManagement,
+} from "./routes";
 import { errorHandler, notFound } from "./middlewares";
 
 // Initialize the Hono app

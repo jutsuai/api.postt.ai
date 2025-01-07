@@ -1,6 +1,6 @@
 const axios = require("axios");
 
-const fetchLogoUrl = async (logoUrn, headers) => {
+const fetchLogoUrl = async (logoUrn: string, headers: any) => {
   if (!logoUrn) {
     console.error("No logo URN provided.");
     return null;
@@ -31,7 +31,7 @@ const fetchLogoUrl = async (logoUrn, headers) => {
       `No playableStreams or downloadUrl found for asset ID ${assetId}.`
     );
     return null;
-  } catch (error) {
+  } catch (error: any) {
     console.error(
       `Error fetching logo for asset ID ${assetId}:`,
       error.response ? error.response.data : error.message
