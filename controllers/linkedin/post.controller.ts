@@ -3,7 +3,9 @@ import { Context } from "hono";
 import { Carousel, LinkedinProfile } from "../../models";
 import generatePDF from "../../components/generatePDF";
 import { file } from "bun";
-import { uploadFileToS3 } from "../../utils/aws.util";
+import { AWSPut } from "../../utils/aws.util";
+import Post from "../../models/post/post.model";
+import publishPostLinkedin from "../../components/publishPostLinkedin";
 
 /**
  * @api {post} /api/v1/linkedin/:orgId/post Linkedin Post
@@ -326,58 +328,78 @@ export const createCarouselPost = async (ctx: Context | any) => {
  * @access private
  */
 export const createImagePost = async (ctx: Context | any) => {
-  // const { commentary, image } = await ctx.req.json();
+  const userId = await ctx.get("user")._id;
+  const linkedinId = await ctx.req.param("linkedinId");
+  const linkedinProfile = await LinkedinProfile.findOne({ linkedinId }).select(
+    "type"
+  );
+
   const formData = await ctx.req.formData();
-
-  const image = formData.get("content"); // Get the file
+  const file = formData.get("file"); // Get the file
+  const fileName = formData.get("fileName"); // Get the file
   const commentary = formData.get("commentary"); // Get other fields
+  const scheduled = formData.get("scheduled"); // Get other fields
+  const scheduledAt = formData.get("scheduledAt"); // Get other fields
 
-  if (!image.type) {
+  console.log("file : ", file);
+
+  if (!file.type || !commentary) {
     return ctx.json(
       {
         status: 400,
         success: false,
-        message: "Image is required",
+        message: "Please provide an image and commentary",
       },
       400
     );
   }
-  console.log("image : ", image.type);
 
   try {
-    // Upload the image to our S3 bucket
-
-    // const linkedinId = await ctx.req.param("linkedinId");
-    // const linkedinProfile = await LinkedinProfile.findOne({ linkedinId }).select(
-    //   "type"
-    // );
-
-    // Convert image to ArrayBuffer and then to Buffer
-    const arrayBuffer = await image.arrayBuffer();
+    // Convert file to ArrayBuffer and then to Buffer
+    const arrayBuffer = await file.arrayBuffer();
     const imageBuffer = Buffer.from(arrayBuffer);
 
-    // Optional: Base64 conversion
-    const imageBase64 = imageBuffer.toString("base64");
+    const params = {
+      Key: `linkedin/${userId}/images/${fileName}`,
+      ContentType: file.type,
+      Body: imageBuffer,
+    };
+    const mediaUrl = await AWSPut(params);
 
-    console.log("imageBase64:", imageBase64);
+    console.log("mediaUrl : ", mediaUrl);
 
-    // const imageBase64 = Buffer.from(image as any).toString("base64");
+    // Create the post object
+    const postData = {
+      commentary,
+      media: {
+        name: fileName,
+        fileType: file.type,
+        url: mediaUrl,
+      },
+      type: "image",
 
-    // convert image obj to base64
+      author: linkedinId,
+      authorType: linkedinProfile?.type,
+      createdBy: userId,
 
-    const upload = await uploadFileToS3({
-      bucket: process.env.AWS_BUCKET_NAME,
-      buffer: imageBase64 as any,
-      key: "image.jpg",
-      contentType: image.type,
-    });
+      status: "draft",
+      scheduled: scheduled,
+      published: false,
+      scheduledAt: scheduledAt,
+      // publishedAt: new Date(),
+    };
 
-    // console.log("linkedinProfile : ", commentary, image, upload);
+    // Create the post
+    const post = await Post.create(postData);
+
+    if (!scheduled) {
+      publishPostLinkedin(post?._id);
+    }
 
     return ctx.json({
       status: 200,
       success: true,
-      data: upload,
+      data: post,
       message: "Image post created successfully",
     });
   } catch (error: any) {
