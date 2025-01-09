@@ -18,37 +18,14 @@ post.post("/:linkedinId/post/text", protect, (c) =>
   linkedinPostController.createTextPost(c)
 );
 
-// // image post
-// post.post("/:linkedinId/post/image", protect, (c) =>
-//   linkedinPostController.createImagePost(c)
-// );
-
 // carousel post
 post.post("/:linkedinId/post/carousel", protect, (c) =>
   linkedinPostController.createCarouselPost(c)
 );
 
-// // Linkedin Callback
-// post.post("/callback", protect, (c) =>
-//   linkedinPostController.linkedinCallback(c)
-// );
-
-// // Linkedin Refresh Token
-// post.post("/refresh", protect, (c) =>
-//   linkedinPostController.linkedinRefreshToken(c)
-// );
-
-// // Get User Details
-// post.get("/user", protect, (c) => linkedinPostController.getUserDetails(c));
-
-// // Get Organization List for DB
-// post.get("/organizationList", protect, (c) =>
-//   linkedinPostController.getOrganizationListFormDB(c)
-// );
-
-// // Get Organization List for Linkedin
-// post.post("/organizationList", protect, (c) =>
-//   linkedinPostController.getOrganizationListFormLinkedin(c)
-// );
+// carousel post
+post.post("/:linkedinId/post/image", protect, (c) =>
+  linkedinPostController.createImagePost(c)
+);
 
 export default post;

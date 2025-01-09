@@ -3,6 +3,7 @@ import { Context } from "hono";
 import { Carousel, LinkedinProfile } from "../../models";
 import generatePDF from "../../components/generatePDF";
 import { file } from "bun";
+import { uploadFileToS3 } from "../../utils/aws.util";
 
 /**
  * @api {post} /api/v1/linkedin/:orgId/post Linkedin Post
@@ -317,4 +318,75 @@ export const createCarouselPost = async (ctx: Context | any) => {
     data: postData,
     message: "Carousel post created successfully",
   });
+};
+
+/**
+ * @api {post} /api/v1/linkedin/:orgId/post/image Linkedin Image Post
+ * @apiGroup Management
+ * @access private
+ */
+export const createImagePost = async (ctx: Context | any) => {
+  // const { commentary, image } = await ctx.req.json();
+  const formData = await ctx.req.formData();
+
+  const image = formData.get("content"); // Get the file
+  const commentary = formData.get("commentary"); // Get other fields
+
+  if (!image.type) {
+    return ctx.json(
+      {
+        status: 400,
+        success: false,
+        message: "Image is required",
+      },
+      400
+    );
+  }
+  console.log("image : ", image.type);
+
+  try {
+    // Upload the image to our S3 bucket
+
+    // const linkedinId = await ctx.req.param("linkedinId");
+    // const linkedinProfile = await LinkedinProfile.findOne({ linkedinId }).select(
+    //   "type"
+    // );
+
+    // Convert image to ArrayBuffer and then to Buffer
+    const arrayBuffer = await image.arrayBuffer();
+    const imageBuffer = Buffer.from(arrayBuffer);
+
+    // Optional: Base64 conversion
+    const imageBase64 = imageBuffer.toString("base64");
+
+    console.log("imageBase64:", imageBase64);
+
+    // const imageBase64 = Buffer.from(image as any).toString("base64");
+
+    // convert image obj to base64
+
+    const upload = await uploadFileToS3({
+      bucket: process.env.AWS_BUCKET_NAME,
+      buffer: imageBase64 as any,
+      key: "image.jpg",
+      contentType: image.type,
+    });
+
+    // console.log("linkedinProfile : ", commentary, image, upload);
+
+    return ctx.json({
+      status: 200,
+      success: true,
+      data: upload,
+      message: "Image post created successfully",
+    });
+  } catch (error: any) {
+    console.error("Error in Image Post: ", error);
+    return ctx.json({
+      status: 400,
+      success: false,
+      data: error,
+      message: "Failed to create image post",
+    });
+  }
 };
