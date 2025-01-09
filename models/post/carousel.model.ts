@@ -2,7 +2,7 @@ import { Schema, model } from "mongoose";
 
 interface IPostCarousel {
   slides: {
-    pageType: string;
+    pageType: "start" | "slide" | "end";
     title: string;
     description: string;
     image: string;

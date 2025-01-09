@@ -16,14 +16,14 @@ interface IPost {
   createdBy: any;
 
   status: "draft" | "scheduled" | "published" | "failed";
-  scheduled: boolean;
-  published: boolean;
-  scheduledAt: Date;
-  publishedAt: Date;
+  // scheduled: boolean;
+  // published: boolean;
+  // scheduledAt: Date;
+  // publishedAt: Date;
 }
 
 const PostSchema = new Schema<IPost>({
-  platform: { type: String, default: "linkedin", required: false },
+  platform: { type: String, default: "linkedin" },
   linkedinPostId: { type: String, required: false },
   commentary: { type: String, required: false },
 
@@ -35,7 +35,7 @@ const PostSchema = new Schema<IPost>({
 
   type: {
     type: String,
-    required: false,
+    required: true,
     enum: ["text", "image", "video", "carousel"],
   },
 
@@ -48,10 +48,10 @@ const PostSchema = new Schema<IPost>({
     required: false,
     enum: ["draft", "scheduled", "published", "failed"],
   },
-  scheduled: { type: Boolean, required: false },
-  published: { type: Boolean, required: false },
-  scheduledAt: { type: Date, required: false },
-  publishedAt: { type: Date, required: false },
+  // scheduled: { type: Boolean, required: false },
+  // published: { type: Boolean, required: false },
+  // scheduledAt: { type: Date, required: false },
+  // publishedAt: { type: Date, required: false },
 });
 
 const Post = model("Post", PostSchema);
