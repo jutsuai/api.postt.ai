@@ -4,14 +4,9 @@ import { prettyJSON } from "hono/pretty-json";
 import { cors } from "hono/cors";
 //
 import connectDB from "./config/db";
-import {
-  Users,
-  Auth,
-  LinkedinManagement,
-  LinkedinPost,
-  postManagement,
-} from "./routes";
+import { Users, Auth, LinkedinManagement, LinkedinPost, Post } from "./routes";
 import { errorHandler, notFound } from "./middlewares";
+// import post from "./routes/linkedin/linkedinPost.routes";
 
 // Initialize the Hono app
 const app = new Hono().basePath("/api/v1");
@@ -37,9 +32,11 @@ app.get("/", (c) => c.text("live!"));
 // API Routes
 app.route("/auth", Auth);
 app.route("/users", Users);
-app.route("/linkedin", LinkedinPost);
 
+app.route("/linkedin", LinkedinPost);
 app.route("/linkedin/management", LinkedinManagement);
+
+app.route("/posts", Post);
 
 // Error Handler
 app.onError((err, c) => {

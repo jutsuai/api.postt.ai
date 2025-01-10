@@ -12,18 +12,23 @@ import publishPostLinkedin from "../../components/publishPostLinkedin";
  * @apiGroup Management
  * @access private
  */
-export const getAllPost = async (ctx: Context) => {
-  // console.log("============= linkedinPost : ", await ctx.req.json());
-  // const { orgId } = await ctx.req.json();
-
+export const getPostById = async (ctx: Context) => {
   console.log("============= linkedinPost : ");
-
   const user = await ctx.get("user");
+
+  const linkedinPostId = await ctx.req.param("linkedinPostId");
+
+  console.log("linkedinPostId: ", linkedinPostId);
+
   const accessToken =
     user?.tokens?.management?.access_token || user?.tokens?.auth?.access_token;
 
+  console.log("AccessToken: ", accessToken);
+
   // const url = `https://api.linkedin.com/rest/posts?q=authors&authors=List(${organizationId})`;
-  const url = `https://api.linkedin.com/v2/rest/posts`;
+  const url = `https://api.linkedin.com/rest/socialActions/${encodeURIComponent(
+    linkedinPostId
+  )}`;
 
   const headers = {
     Authorization: `Bearer ${accessToken}`,
@@ -31,59 +36,20 @@ export const getAllPost = async (ctx: Context) => {
     "X-RestLi-Protocol-Version": "2.0.0",
     "Content-Type": "application/json",
   };
-  console.log("============= linkedinPost headers : ", headers);
 
   try {
-    const responce = await axios
-      .get(url, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "LinkedIn-Version": process.env.LINKEDIN_API_VERSION,
-          "Content-Type": "application/json",
-        },
-
-        params: {
-          q: "authors",
-          // authors: organizationId, // Use URN format
-          authors: `List(urn:li:organization:91137041)`,
-          start: 0,
-          count: 10,
-        },
-      })
-      .then((res) => {
-        console.log("linkedinPost : ", res.data);
-        return res.data;
-      })
-      .catch((err) => {
-        console.log("linkedinPost error : ", err.response.data);
-      });
-
-    // const responce = await restliClient.get({
-    //   resourcePath: "/posts",
-
-    //   queryParams: {
-    //     q: "authors",
-    //     // vanityName: organizationId,
-    //     authors: `List(${organizationId})`,
-    //   },
-
-    //   accessToken: accessToken,
-    // });
-
-    console.log("linkedinPost : ", responce);
+    const responce = await axios.get(url, { headers: headers });
 
     return ctx.json(
       {
         status: 200,
         success: true,
-        data: responce,
+        data: responce.data,
         message: "Linkedin post",
       },
       200
     );
   } catch (err: any) {
-    console.log("linkedinLogin  error  : ", err);
-
     return ctx.json(
       {
         status: 400,
@@ -183,6 +149,7 @@ export const getCarouselById = async (ctx: Context) => {
       message: "Carousel fetched successfully",
     });
   } catch (error: any) {
+    console.log(error);
     return ctx.json(
       {
         status: error.status,

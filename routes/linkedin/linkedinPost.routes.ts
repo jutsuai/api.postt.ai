@@ -4,14 +4,18 @@ import { protect } from "../../middlewares";
 
 const post = new Hono();
 
+post.get("/posts/:linkedinPostId", protect, (c) =>
+  linkedinPostController.getPostById(c)
+);
+
 post.get("/carousel/:carouselId", (c) =>
   linkedinPostController.getCarouselById(c)
 );
 
-// Linkedin Post
-post.get("/:linkedinId/post", protect, (c) =>
-  linkedinPostController.getAllPost(c)
-);
+// // Linkedin Post
+// post.get("/:linkedinId/post", protect, (c) =>
+//   linkedinPostController.getAllPost(c)
+// );
 
 // text post
 post.post("/:linkedinId/post/text", protect, (c) =>

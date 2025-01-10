@@ -1,11 +1,9 @@
 import { Context } from "hono";
 import axios from "axios";
-
 import { LinkedinProfile, User } from "../../models";
-import { AuthClient, RestliClient } from "linkedin-api-client";
+import { AuthClient } from "linkedin-api-client";
 import fetchOrganizationUrns from "../../components/fetchOrganizationUrns";
 import fetchOrganizationDetails from "../../components/fetchOrganizationDetails";
-import fetchLogoUrl from "../../components/fetchLogoUrl";
 import saveOrganizationDetails from "../../components/saveOrganizationDetails";
 
 const authClient = new AuthClient({
@@ -13,7 +11,6 @@ const authClient = new AuthClient({
   clientSecret: process.env.LINKEDIN_MANAGEMENT_CLIENT_SECRET,
   redirectUrl: process.env.LINKEDIN_MANAGEMENT_REDIRECT_URI,
 } as any);
-const restliClient = new RestliClient();
 
 export const linkedinLogin = async (c: Context) => {
   const scopes = [

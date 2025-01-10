@@ -3,4 +3,6 @@ export * as userController from "./user.controller";
 
 export * as userProfileController from "./userProfile.controller";
 export * as linkedinManagementController from "./linkedin/management.controller";
-export * as linkedinPostController from "./linkedin/post.controller";
+export * as linkedinPostController from "./linkedin/linkedinPost.controller";
+
+export * as postController from "./post.controller";
