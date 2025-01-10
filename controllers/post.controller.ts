@@ -1,6 +1,7 @@
 import { Context } from "hono";
-import { Post } from "../models";
+import { Carousel, Post } from "../models";
 import axios from "axios";
+import { CUSTOMIZATION_DETAILS, SLIDE_DETAILS } from "../default/carousel";
 
 /**
  * @api {get} /posts
@@ -285,15 +286,29 @@ export const createCarouselPost = async (c: Context) => {
   const userId = await c.get("user")._id;
 
   try {
+    const createCarousel = await Carousel.create({
+      customizations: CUSTOMIZATION_DETAILS,
+      slides: SLIDE_DETAILS,
+      createdBy: userId,
+    });
+
+    // author, authorType,
+
     const post = await Post.create({
       ...c.req.json(),
+
       type: "carousel",
       createdBy: userId,
+      status: "draft",
+      contentReference: createCarousel._id,
     });
 
     return c.json({
       success: true,
-      data: post,
+      data: {
+        postId: post?._id,
+        carouselId: createCarousel?._id,
+      },
       message: "Carousel post created successfully",
     });
   } catch (error: any) {

@@ -21,13 +21,13 @@ interface IPostCarousel {
       visible: boolean;
     };
     content: {
-      horizontal: string;
-      vertical: string;
+      horizontal: "left" | "center" | "right";
+      vertical: "top" | "center" | "bottom";
     };
     createdBy: {
       visible: boolean;
-      horizontal: string;
-      vertical: string;
+      horizontal: "left" | "center" | "right";
+      vertical: "top" | "center" | "bottom";
     };
     size: {
       height: number;

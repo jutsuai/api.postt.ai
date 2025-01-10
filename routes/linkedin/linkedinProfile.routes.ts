@@ -43,6 +43,10 @@ profiles.delete("/:profileId", protect, (c) =>
   linkedinPostController.deleteLinkedinProfile(c)
 );
 
+profiles.post("/:profileId/post/carousel", protect, (c) =>
+  linkedinPostController.createCarouselPost(c)
+);
+
 // // ### LinkedIn Posts (/linkedin/profiles/:profileId/posts)
 // // Get all posts for a LinkedIn profile
 // profiles.get("/:profileId/posts", protect, (c) =>

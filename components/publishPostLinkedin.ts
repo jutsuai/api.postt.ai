@@ -1,5 +1,6 @@
 import axios from "axios";
 import { Post } from "../models";
+import getBinaryFromUrl from "./getBinaryFromUrl";
 
 const publishPostLinkedin = async (postId: any) => {
   try {
@@ -50,35 +51,27 @@ const publishPostLinkedin = async (postId: any) => {
       }
     );
 
-    // const { uploadUrl, asset } = registerResponse.data.value;
-
     const uploadUrl =
       registerResponse?.data?.value?.uploadMechanism?.[
         "com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest"
       ]?.uploadUrl;
     const asset = registerResponse?.data?.value?.asset;
 
-    console.log(
-      `Image upload registered. Upload URL: ${uploadUrl}, Asset: ${asset}`
-    );
-
     // 2. Upload the Image
-    console.log(`Downloading image from URL: ${post.media.url}`);
-    const imageResponse = await axios.get(post.media.url, {
-      responseType: "arraybuffer",
-    });
-    const imageBuffer = Buffer.from(imageResponse.data, "binary");
+    const { data: imageBuffer, error } = await getBinaryFromUrl(post.media.url);
 
-    console.log("registerResponse.data : ", registerResponse.data);
-    console.log("uploadUrl : ", uploadUrl, "----- asset ", asset);
-    console.log(imageBuffer);
-
-    console.log("Image downloaded successfully. Uploading to LinkedIn...");
+    if (error) {
+      console.error("Error downloading image:", error);
+      return {
+        data: null,
+        error: "Failed to download image",
+      };
+    }
 
     await axios.post(uploadUrl, imageBuffer, {
       headers: {
         "Content-Type": post.media.fileType,
-        "Content-Length": imageBuffer.length,
+        "Content-Length": imageBuffer?.length,
       },
     });
 

@@ -6,6 +6,7 @@ import { file } from "bun";
 import { AWSPut } from "../../utils/aws.util";
 import Post from "../../models/post/post.model";
 import publishPostLinkedin from "../../components/publishPostLinkedin";
+import getBinaryFromUrl from "../../components/getBinaryFromUrl";
 
 /**
  * @api {get} /api/v1/linkedin/profiles get all linkedin profiles
@@ -241,28 +242,34 @@ export const createTextPost = async (ctx: Context | any) => {
  * @access private
  */
 export const createCarouselPost = async (ctx: Context | any) => {
-  const { commentary, slides, customizations } = await ctx.req.json();
-
-  const linkedinId = await ctx.req.param("linkedinId");
-  const linkedinProfile = await LinkedinProfile.findOne({ linkedinId }).select(
-    "type"
-  );
   const user = await ctx.get("user");
+  const profileId = await ctx.req.param("profileId");
+  const linkedinProfile = await LinkedinProfile.findOne({
+    linkedinId: profileId,
+  }).select("type");
   const accessToken =
     user?.tokens?.management?.access_token || user?.tokens?.auth?.access_token;
 
-  // 0. Store the PDF Data in DB
-  const carousel = (await Carousel.create({
+  const {
+    commentary,
     slides,
     customizations,
-    createdBy: user?._id,
-  })) as any;
 
-  // 1. Get All the data from the request
-  // 2. create PDF from the data
-  // 3. Upload the PDF to the server / local storage
-  const { data: filePath, error: pdfGenerationError } = await generatePDF(
-    carousel._id
+    carouselId,
+  } = await ctx.req.json();
+
+  // 0. Store the PDF Data in DB
+  const carousel = carouselId
+    ? ((await Carousel.findById(carouselId)) as any)
+    : ((await Carousel.create({
+        slides,
+        customizations,
+        createdBy: user?._id,
+      })) as any);
+
+  const { data: fileUrl, error: pdfGenerationError } = await generatePDF(
+    carousel._id,
+    user?._id
   );
 
   if (pdfGenerationError) {
@@ -276,15 +283,28 @@ export const createCarouselPost = async (ctx: Context | any) => {
     });
   }
 
-  console.log("PDF URLS: ", filePath);
+  console.log("filePath ================ : ", fileUrl);
 
-  // Read the file into a buffer
-  const bunFile = file(filePath as any);
-  const arrayBuffer = await bunFile.arrayBuffer();
-  const fileBuffer = Buffer.from(arrayBuffer);
+  const { data: fileBufferData, error: fileBufferError } =
+    await getBinaryFromUrl(fileUrl as any);
 
-  // Determine the file's MIME type
-  const fileMimeType = bunFile.type;
+  if (fileBufferError) {
+    console.error("Error in PDF Buffer: ", fileBufferError);
+
+    return ctx.json({
+      status: 400,
+      success: false,
+      data: null,
+      message: "Failed to get PDF Buffer",
+    });
+  }
+
+  const { buffer: fileBuffer, contentType: fileMimeType } =
+    fileBufferData as any;
+
+  console.log("fileBuffer : ", fileBuffer);
+  console.log("fileMimeType : ", fileMimeType);
+  console.log("profileId : ", profileId);
 
   // 4. Register the Upload
   const registerResponse = await axios.post(
@@ -293,8 +313,8 @@ export const createCarouselPost = async (ctx: Context | any) => {
       initializeUploadRequest: {
         owner:
           linkedinProfile?.type === "organization"
-            ? `urn:li:organization:${linkedinId}`
-            : `urn:li:person:${linkedinId}`,
+            ? `urn:li:organization:${profileId}`
+            : `urn:li:person:${profileId}`,
       },
     },
     {
@@ -309,6 +329,8 @@ export const createCarouselPost = async (ctx: Context | any) => {
 
   const { uploadUrl, document } = registerResponse.data.value;
 
+  console.log("uploadUrl : ", uploadUrl);
+
   // 5.  Upload the Document
   await axios.put(uploadUrl, fileBuffer, {
     headers: {
@@ -316,12 +338,13 @@ export const createCarouselPost = async (ctx: Context | any) => {
     },
   });
 
+  console.log("======== =555");
   // 6. Create the Post
   const postData = {
     author:
       linkedinProfile?.type === "organization"
-        ? `urn:li:organization:${linkedinId}`
-        : `urn:li:person:${linkedinId}`,
+        ? `urn:li:organization:${profileId}`
+        : `urn:li:person:${profileId}`,
     commentary: commentary,
     visibility: "PUBLIC",
     distribution: {
@@ -338,6 +361,7 @@ export const createCarouselPost = async (ctx: Context | any) => {
     lifecycleState: "PUBLISHED",
     isReshareDisabledByAuthor: false,
   };
+  console.log("======== =6666");
 
   await axios
     .post("https://api.linkedin.com/v2/posts", postData, {
@@ -353,6 +377,7 @@ export const createCarouselPost = async (ctx: Context | any) => {
     .catch((error) => {
       console.log(" error : ", error.response.data);
     });
+  console.log("======== =777");
 
   return ctx.json({
     status: 200,
@@ -369,7 +394,7 @@ export const createCarouselPost = async (ctx: Context | any) => {
  */
 export const createImagePost = async (ctx: Context | any) => {
   const userId = await ctx.get("user")._id;
-  const linkedinId = await ctx.req.param("linkedinId");
+  const linkedinId = await ctx.req.param("profileId");
   const linkedinProfile = await LinkedinProfile.findOne({ linkedinId }).select(
     "type"
   );

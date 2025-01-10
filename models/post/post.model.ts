@@ -1,4 +1,4 @@
-import { Schema, model } from "mongoose";
+import { Schema, Types, model } from "mongoose";
 
 interface IPost {
   platform: string;
@@ -9,17 +9,14 @@ interface IPost {
     fileType: string;
     url: string;
   };
-  type: "text" | "image" | "video" | "carousel";
+  type: "text" | "image" | "video" | "carousel" | "document";
 
   author: string;
   authorType: "organization" | "person";
-  createdBy: any;
+  createdBy: Types.ObjectId;
 
   status: "draft" | "scheduled" | "published" | "failed";
-  // scheduled: boolean;
-  // published: boolean;
-  // scheduledAt: Date;
-  // publishedAt: Date;
+  contentReference?: Types.ObjectId;
 }
 
 const PostSchema = new Schema<IPost>({
@@ -48,10 +45,18 @@ const PostSchema = new Schema<IPost>({
     required: false,
     enum: ["draft", "scheduled", "published", "failed"],
   },
-  // scheduled: { type: Boolean, required: false },
-  // published: { type: Boolean, required: false },
-  // scheduledAt: { type: Date, required: false },
-  // publishedAt: { type: Date, required: false },
+
+  contentReference: {
+    type: Schema.Types.ObjectId,
+    required: function (this: IPost) {
+      return (
+        this.type === "carousel" ||
+        this.type === "video" ||
+        this.type === "document"
+      );
+    },
+    refPath: "type", // Dynamic reference based on `type` field
+  },
 });
 
 const Post = model("Post", PostSchema);

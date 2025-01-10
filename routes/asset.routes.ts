@@ -15,6 +15,14 @@ assets.get("/carousels/:carouselId", protect, (c) =>
   assetController.getCarouselById(c)
 );
 
+// Create a new carousel
+assets.post("/carousels", protect, (c) => assetController.createCarousel(c));
+
+// Update a specific carousel
+assets.put("/carousels/:carouselId", protect, (c) =>
+  assetController.updateCarousel(c)
+);
+
 // Video Assets
 // Get all video assets for the authenticated user
 assets.get("/video", protect, (c) => assetController.getAllVideos(c));
