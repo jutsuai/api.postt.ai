@@ -11,9 +11,7 @@ const assets = new Hono();
 assets.get("/carousels", protect, (c) => assetController.getAllCarousels(c));
 
 // Get details of a specific carousel
-assets.get("/carousels/:carouselId", protect, (c) =>
-  assetController.getCarouselById(c)
-);
+assets.get("/carousels/:carouselId", (c) => assetController.getCarouselById(c));
 
 // Create a new carousel
 assets.post("/carousels", protect, (c) => assetController.createCarousel(c));
@@ -21,6 +19,10 @@ assets.post("/carousels", protect, (c) => assetController.createCarousel(c));
 // Update a specific carousel
 assets.put("/carousels/:carouselId", protect, (c) =>
   assetController.updateCarousel(c)
+);
+
+assets.get("/carousels/:carouselId/download", protect, (c) =>
+  assetController.downloadCarousel(c)
 );
 
 // Video Assets

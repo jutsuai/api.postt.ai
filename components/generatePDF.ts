@@ -3,8 +3,17 @@ import { PDFDocument } from "pdf-lib";
 import puppeteer from "puppeteer";
 import { AWSPut } from "../utils/aws.util";
 
-const generatePDF = async (carouselId: string, userId: string) => {
+const generatePDF = async ({
+  carouselId,
+  userId,
+}: {
+  carouselId: any;
+  userId: string;
+}) => {
   try {
+    console.log("Generating PDF for carousel with ID:", carouselId);
+    console.log("User ID:", userId);
+
     const carousel = await Carousel.findById(carouselId);
 
     if (!carousel) {
@@ -19,6 +28,7 @@ const generatePDF = async (carouselId: string, userId: string) => {
     const urls = slides.map((slide: any, index: any) => {
       return `http://localhost:3000/restricted/linkedin/carousel/${carouselId}/slide/${index}`;
     });
+    console.log("URLs to generate PDF from:", urls);
 
     if (urls.some((url: string) => !url)) {
       return { data: null, error: "Invalid URL" };
@@ -72,16 +82,14 @@ const generatePDF = async (carouselId: string, userId: string) => {
 
     // Upload the PDF to S3 using your existing AWSPut function
     const mediaUrl = await AWSPut(params);
-    return { data: mediaUrl, error: null };
-
-    // const outputDir = "./output";
-    // const fileName = `slides_combined_${Date.now()}.pdf`;
-    // const filePath = join(outputDir, fileName);
-
-    // await write(filePath, finalPdfBuffer);
-    // console.log(`PDF saved at: ${filePath}`);
-
-    // return { data: filePath, error: null };
+    return {
+      data: {
+        url: mediaUrl,
+        fileType: fileType,
+        name: fileName,
+      },
+      error: null,
+    };
   } catch (error: any) {
     console.error("Error generating PDF:", error);
     return {

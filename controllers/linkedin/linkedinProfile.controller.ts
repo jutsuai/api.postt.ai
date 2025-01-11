@@ -5,7 +5,7 @@ import generatePDF from "../../components/generatePDF";
 import { file } from "bun";
 import { AWSPut } from "../../utils/aws.util";
 import Post from "../../models/post/post.model";
-import publishPostLinkedin from "../../components/publishPostLinkedin";
+import publishPostLinkedin from "../../components/linkedinPublish/documentPublish";
 import getBinaryFromUrl from "../../components/getBinaryFromUrl";
 
 /**

@@ -1,6 +1,7 @@
 import { Context } from "hono";
 import { Carousel, Post } from "../models";
 import PostCarousel from "../models/post/carousel.model";
+import generatePDF from "../components/generatePDF";
 
 /**
  * @api {get} /assets/carousels
@@ -35,9 +36,10 @@ export const getAllCarousels = async (ctx: Context) => {
  * @apiGroup assets
  * @access Private
  */
-export const getCarouselById = async (ctx: Context) => {
+export const getCarouselById = async (ctx: Context | any) => {
   try {
-    const { carouselId } = await ctx.req.param();
+    const carouselId = await ctx.req.param("carouselId");
+    console.log("carouselId : ", carouselId);
 
     if (!carouselId) {
       return ctx.json(
@@ -49,12 +51,19 @@ export const getCarouselById = async (ctx: Context) => {
       );
     }
 
-    const post = await Carousel.findById(carouselId);
+    const carousel = await Carousel.findById(carouselId).populate({
+      path: "createdBy",
+      select: "username firstName lastName email avatar",
+    });
+    const post = await Post.findOne({ contentReference: carouselId });
 
     return ctx.json(
       {
         success: true,
-        data: post,
+        data: {
+          post,
+          carousel,
+        },
         message: "Carousel fetched successfully",
       },
       200
@@ -105,6 +114,42 @@ export const createCarousel = async (ctx: Context) => {
         success: false,
         data: error,
         message: "Carousel not created",
+      },
+      error.status
+    );
+  }
+};
+
+/**
+ * @api {get} /assets/carousels/:carouselId/download
+ * @apiGroup assets
+ * @access Private
+ */
+export const downloadCarousel = async (ctx: Context) => {
+  const userId = await ctx.get("user")._id;
+  const carouselId = await ctx.req.param("carouselId");
+  try {
+    const { data: media, error: mediaError } = await generatePDF({
+      carouselId,
+      userId,
+    });
+
+    console.log("media: ", media);
+
+    return ctx.json(
+      {
+        success: true,
+        data: media,
+        message: "Carousel downloaded successfully",
+      },
+      200
+    );
+  } catch (error: any) {
+    return ctx.json(
+      {
+        success: false,
+        data: error,
+        message: "Carousel not downloaded",
       },
       error.status
     );

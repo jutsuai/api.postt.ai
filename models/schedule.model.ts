@@ -4,7 +4,7 @@ interface ISchedule {
   createdBy: any;
   postId: any;
   platform: string; // e.g., 'linkedin'
-  status: "draft" | "scheduled" | "published" | "failed";
+  status: "scheduled" | "published" | "failed";
   scheduledAt: Date;
   publishedAt?: Date;
 }
@@ -17,7 +17,7 @@ const ScheduleSchema = new Schema<ISchedule>(
     status: {
       type: String,
       required: true,
-      enum: ["draft", "scheduled", "published", "failed"],
+      enum: ["scheduled", "published", "failed"],
     },
     scheduledAt: { type: Date, required: true },
     publishedAt: { type: Date },

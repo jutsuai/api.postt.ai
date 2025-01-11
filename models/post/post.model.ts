@@ -38,7 +38,11 @@ const PostSchema = new Schema<IPost>(
     },
 
     author: { type: String, required: false },
-    authorType: { type: String, required: false },
+    authorType: {
+      type: String,
+      required: false,
+      enum: ["organization", "person"],
+    },
     createdBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
 
     status: {

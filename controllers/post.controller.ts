@@ -2,6 +2,9 @@ import { Context } from "hono";
 import { Carousel, Post } from "../models";
 import axios from "axios";
 import { CUSTOMIZATION_DETAILS, SLIDE_DETAILS } from "../default/carousel";
+import generatePDF from "../components/generatePDF";
+import Schedule from "../models/schedule.model";
+import publishPostLinkedin from "../components/linkedinPublish/documentPublish";
 
 /**
  * @api {get} /posts
@@ -318,6 +321,96 @@ export const createCarouselPost = async (c: Context) => {
         success: false,
         data: error,
         message: "Post not created",
+      },
+      error.status
+    );
+  }
+};
+
+/**
+ * @api {post} /posts/carousel/publish
+ * @apiGroup posts
+ * @access Private
+ */
+export const publishPost = async (ctx: Context) => {
+  const postId = await ctx.req.param("postId");
+  const userId = await ctx.get("user")._id;
+
+  console.log("postId: ", postId);
+  console.log("userId: ", userId);
+  // commentary,  scheduledAt, author, authorType,
+  const body = await ctx.req.json();
+
+  try {
+    const post = await Post.findById(postId);
+    console.log("post: ", post);
+
+    if (!post) {
+      return ctx.json(
+        {
+          success: false,
+          message: "Post not found",
+        },
+        404
+      );
+    }
+
+    if (post.type === "carousel") {
+      const { data: media, error: mediaError } = await generatePDF({
+        carouselId: post.contentReference,
+        userId,
+      });
+
+      if (mediaError) {
+        return ctx.json({ success: false, message: mediaError }, 400);
+      }
+
+      if (body?.scheduledAt) {
+        // Schedule the post
+        console.log("This is a scheduled post");
+        await Schedule.create({
+          createdBy: userId,
+          postId: postId,
+          status: "scheduled",
+          scheduledAt: body.scheduledAt,
+        });
+
+        const updatePost = await Post.findByIdAndUpdate(
+          postId,
+          {
+            status: "scheduled",
+            media,
+          },
+          { new: true }
+        );
+
+        return ctx.json(
+          {
+            success: true,
+            data: updatePost,
+            message: "Post scheduled",
+          },
+          200
+        );
+      } else {
+        // Publish the post
+        console.log("This is a published post");
+        await Post.findByIdAndUpdate(postId, { media });
+
+        const { data, error } = await publishPostLinkedin(postId);
+
+        return ctx.json(
+          { success: true, data, message: "Post published" },
+          200
+        );
+      }
+    }
+  } catch (error: any) {
+    return ctx.json(
+      {
+        success: false,
+        data: error,
+        message: "Post not found",
       },
       error.status
     );

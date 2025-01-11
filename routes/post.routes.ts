@@ -33,4 +33,7 @@ posts.post("/video", protect, (c) => postController.createVideoPost(c));
 // Create a carousel post
 posts.post("/carousel", protect, (c) => postController.createCarouselPost(c));
 
+// publish a carousel post
+posts.post("/:postId/publish", protect, (c) => postController.publishPost(c));
+
 export default posts;
