@@ -4,7 +4,14 @@ import { prettyJSON } from "hono/pretty-json";
 import { cors } from "hono/cors";
 //
 import connectDB from "./config/db";
-import { Users, Auth, LinkedinManagement, LinkedinPost, Post } from "./routes";
+import {
+  Users,
+  Auth,
+  LinkedinProfile,
+  LinkedinApi,
+  Posts,
+  Assets,
+} from "./routes";
 import { errorHandler, notFound } from "./middlewares";
 // import post from "./routes/linkedin/linkedinPost.routes";
 
@@ -33,10 +40,13 @@ app.get("/", (c) => c.text("live!"));
 app.route("/auth", Auth);
 app.route("/users", Users);
 
-app.route("/linkedin", LinkedinPost);
-app.route("/linkedin/management", LinkedinManagement);
+app.route("/linkedin/api", LinkedinApi);
+app.route("/linkedin/profiles", LinkedinProfile);
 
-app.route("/posts", Post);
+app.route("/posts", Posts);
+
+app.route("/assets", Assets);
+// app.route("/schedules", Post);
 
 // Error Handler
 app.onError((err, c) => {

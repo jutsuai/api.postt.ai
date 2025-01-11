@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { userController, userProfileController } from "../controllers";
+import { userController } from "../controllers";
 import { isAdmin, protect } from "../middlewares";
 
 const users = new Hono();
@@ -14,9 +14,9 @@ users.get("/:id", protect, (c) => userController.getUserById(c));
 users.put("/:id", protect, (c) => userController.updateUser(c));
 
 // Get Single User Profile
-users.get("/:id/profile", protect, (c) => userProfileController.getUserById(c));
+users.get("/:id/profile", protect, (c) => userController.getUserById(c));
 
 // Update User
-users.put("/:id/profile", protect, (c) => userProfileController.updateUser(c));
+users.put("/:id/profile", protect, (c) => userController.updateUserProfile(c));
 
 export default users;

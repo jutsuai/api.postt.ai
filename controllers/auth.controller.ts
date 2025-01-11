@@ -146,28 +146,43 @@ export const linkedinLogin = async (c: Context) => {
 };
 
 export const linkedinCallback = async (c: Context) => {
-  const { code } = await c.req.json();
-
   try {
+    // Extract code from the request body
+    const { code } = await c.req.json();
+    if (!code) {
+      throw new Error("Authorization code is required");
+    }
+
+    // Exchange authorization code for access token
     const tokenDetails = await authClient.exchangeAuthCodeForAccessToken(code);
+    if (!tokenDetails || !tokenDetails.access_token) {
+      throw new Error("Failed to fetch LinkedIn access token");
+    }
 
-    console.log("linkedinCallback : ", tokenDetails);
+    console.log("LinkedIn Access Token: Retrieved successfully");
 
-    // get user details
+    // Fetch LinkedIn user info
     const { data: liUser } = await restliClient.get({
       resourcePath: "/userinfo",
       accessToken: tokenDetails.access_token,
     });
 
-    console.log("linkedinCallback : ", liUser);
+    if (!liUser) {
+      throw new Error("Failed to fetch LinkedIn user details");
+    }
 
-    // Check for existing user
-    const userExists = await User.findOne({
+    console.log("LinkedIn User Info:", liUser);
+
+    // Check if user already exists in the database
+    const userExists = (await User.findOne({
       linkedinId: liUser?.id || liUser?.sub,
-    });
+    })) as any;
+
+    let user, token;
 
     if (userExists) {
-      const token = await genToken(userExists._id.toString());
+      // Update existing user
+      token = await genToken(userExists._id.toString());
 
       await User.updateOne(
         { linkedinId: liUser?.id },
@@ -190,45 +205,47 @@ export const linkedinCallback = async (c: Context) => {
         token,
         message: "User logged in successfully",
       });
-    }
-
-    // create new user
-    const user = (await User.create({
-      linkedinId: liUser?.id || liUser?.sub,
-      // username: liUser?.vanityName,
-      firstName: liUser?.localizedFirstName || liUser?.given_name || "",
-      lastName: liUser?.localizedLastName || liUser?.family_name || "",
-      email: liUser?.email,
-      role: "user",
-      avatar: liUser?.picture,
-
-      isActive: true,
-      tokens: {
-        auth: {
-          access_token: tokenDetails.access_token,
-          expires_in: tokenDetails.expires_in,
-          scope: tokenDetails.scope,
+    } else {
+      // Create a new user
+      user = (await User.create({
+        linkedinId: liUser?.id || liUser?.sub,
+        firstName: liUser?.localizedFirstName || liUser?.given_name || "",
+        lastName: liUser?.localizedLastName || liUser?.family_name || "",
+        email: liUser?.email,
+        role: "user",
+        avatar: liUser?.picture,
+        isActive: true,
+        tokens: {
+          auth: {
+            access_token: tokenDetails.access_token,
+            expires_in: tokenDetails.expires_in,
+            scope: tokenDetails.scope,
+          },
         },
-      },
-    })) as any;
-    const token = await genToken(user._id.toString());
+      })) as any;
 
-    return c.json({
-      status: 200,
-      success: true,
-      data: user,
-      message: "Linkedin callback",
-      token,
-    });
+      token = await genToken(user._id.toString());
+
+      return c.json({
+        status: 200,
+        success: true,
+        data: user,
+        message: "User created successfully",
+        token,
+      });
+    }
   } catch (err: any) {
     console.log("linkedinCallback : ", err.message);
 
-    return c.status(err.status).json({
-      status: 400,
-      success: false,
-      message: "Linkedin callback failed",
-      data: err,
-    });
+    return c.json(
+      {
+        status: err.status,
+        success: false,
+        message: "Linkedin callback failed",
+        data: err,
+      },
+      err.status
+    );
   }
 };
 
