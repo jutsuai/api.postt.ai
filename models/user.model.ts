@@ -74,9 +74,7 @@ const userSchema = new Schema<IUserDoc>(
 
     onboarding: { type: Object, default: {} },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
 // Match user entered password to hashed password in database

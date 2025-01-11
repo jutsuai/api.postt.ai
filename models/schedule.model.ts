@@ -22,9 +22,7 @@ const ScheduleSchema = new Schema<ISchedule>(
     scheduledAt: { type: Date, required: true },
     publishedAt: { type: Date },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
 const Schedule = model("Schedule", ScheduleSchema);

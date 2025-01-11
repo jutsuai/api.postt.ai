@@ -71,11 +71,14 @@ const customizationsSchema = new Schema({
   },
 });
 
-const PostCarouselSchema = new Schema<IPostCarousel>({
-  slides: [slideSchema],
-  customizations: customizationsSchema,
-  createdBy: { type: Schema.Types.ObjectId, ref: "User", required: false },
-});
+const PostCarouselSchema = new Schema<IPostCarousel>(
+  {
+    slides: [slideSchema],
+    customizations: customizationsSchema,
+    createdBy: { type: Schema.Types.ObjectId, ref: "User", required: false },
+  },
+  { timestamps: true }
+);
 
 const PostCarousel = model("PostCarousel", PostCarouselSchema);
 export default PostCarousel;
