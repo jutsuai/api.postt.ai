@@ -132,9 +132,18 @@ export const updateCarousel = async (ctx: Context) => {
 
     const { commentary, slides, customizations } = await ctx.req.json();
 
+    if (commentary) {
+      await Post.findOneAndUpdate(
+        { contentReference: carouselId },
+        { commentary }
+      ).then((res) => {
+        console.log(res);
+      });
+    }
+
     const post = await PostCarousel.findByIdAndUpdate(
       carouselId,
-      { commentary, slides, customizations },
+      { slides, customizations },
       { new: true }
     );
 

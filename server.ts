@@ -42,7 +42,6 @@ app.route("/users", Users);
 
 app.route("/linkedin/api", LinkedinApi);
 app.route("/linkedin/profiles", LinkedinProfile);
-// app.route("/linkedin/management", LinkedinManagement);
 
 app.route("/posts", Posts);
 
