@@ -1,7 +1,6 @@
 import { Carousel } from "../models";
 import { PDFDocument } from "pdf-lib";
 import puppeteer from "puppeteer";
-import sharp from "sharp";
 import { AWSPut } from "../utils/aws.util";
 
 const generatePDF = async ({
@@ -33,7 +32,7 @@ const generatePDF = async ({
     }
 
     const browser = await puppeteer.launch();
-    const compressedImages = [];
+    const screenshotBuffers = [];
 
     for (const websiteUrl of urls) {
       const page = await browser.newPage();
@@ -45,7 +44,6 @@ const generatePDF = async ({
 
       // Capture the screenshot of the page as an image buffer
       const screenshotBuffer = await page.screenshot({
-        // fullPage: true,
         clip: {
           x: 0,
           y: 0,
@@ -54,16 +52,7 @@ const generatePDF = async ({
         },
       });
 
-      // Compress the screenshot using sharp
-      const compressedImageBuffer = await sharp(screenshotBuffer)
-        .resize({
-          width: customizations?.size?.width,
-          height: customizations?.size?.height,
-        }) // Resize the image to reduce resolution
-        .jpeg({ quality: 100, chromaSubsampling: "4:4:4" }) // Compress the image with 80% quality
-        .toBuffer();
-
-      compressedImages.push(compressedImageBuffer);
+      screenshotBuffers.push(screenshotBuffer);
       await page.close();
     }
 
@@ -71,7 +60,7 @@ const generatePDF = async ({
 
     const finalPdfDoc = await PDFDocument.create();
 
-    for (const imageBuffer of compressedImages) {
+    for (const imageBuffer of screenshotBuffers) {
       const pdfImage = await finalPdfDoc.embedJpg(imageBuffer as any);
       const page = finalPdfDoc.addPage([pdfImage.width, pdfImage.height]);
       page.drawImage(pdfImage, {
