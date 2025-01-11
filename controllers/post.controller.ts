@@ -12,7 +12,9 @@ export const getAllPosts = async (c: Context) => {
   const userId = await c.get("user")._id;
 
   try {
-    const posts = await Post.find({ createdBy: userId });
+    const posts = await Post.find({ createdBy: userId }).sort({
+      createdAt: -1,
+    });
 
     return c.json({
       success: true,
@@ -284,6 +286,7 @@ export const createVideoPost = async (c: Context) => {
  */
 export const createCarouselPost = async (c: Context) => {
   const userId = await c.get("user")._id;
+  const body = await c.req.json();
 
   try {
     const createCarousel = await Carousel.create({
@@ -292,10 +295,8 @@ export const createCarouselPost = async (c: Context) => {
       createdBy: userId,
     });
 
-    // author, authorType,
-
     const post = await Post.create({
-      ...c.req.json(),
+      ...body,
 
       type: "carousel",
       createdBy: userId,
