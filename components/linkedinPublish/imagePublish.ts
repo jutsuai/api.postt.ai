@@ -36,6 +36,14 @@ const imagePublish = async (postId: any) => {
     });
 
     const { uploadUrl, asset } = registerResponse as any;
+    console.log(
+      "Image registered successfully.",
+
+      uploadUrl,
+
+      "=============",
+      asset
+    );
 
     // 2. Upload the Image
     const uploadResponse = await uploadImage({
@@ -172,9 +180,9 @@ const uploadImage = async ({
 }) => {
   try {
     // 2. Upload the Image
-    const { data: imageBuffer, error } = (await getBinaryFromUrl(
-      media.url
-    )) as any;
+    const { data, error } = (await getBinaryFromUrl(media.url)) as any;
+
+    console.log("Image downloaded successfully.", data);
 
     if (error) {
       console.error("Error downloading image:", error);
@@ -184,10 +192,10 @@ const uploadImage = async ({
       };
     }
 
-    await axios.post(uploadUrl, imageBuffer, {
+    await axios.post(uploadUrl, data?.buffer, {
       headers: {
         "Content-Type": media.fileType,
-        "Content-Length": imageBuffer?.length,
+        "Content-Length": data?.buffer?.length,
       },
     });
 
