@@ -131,23 +131,32 @@ export const getUserDetails = async (ctx: Context) => {
 
     console.log("getUserDetails : ", data);
 
-    const linkedinProfile = await LinkedinProfile.create({
-      createdBy: user?._id,
+    const linkedinProfile = await LinkedinProfile.findOneAndUpdate(
+      {
+        linkedinId: data?.id,
+      },
+      {
+        createdBy: user?._id,
 
-      type: "person",
-      linkedinId: data?.id,
-      name: `${data?.localizedFirstName} ${data?.localizedLastName}`,
+        type: "person",
+        linkedinId: data?.id,
+        name: `${data?.localizedFirstName} ${data?.localizedLastName}`,
 
-      slug: data?.vanityName,
-      logo: data?.profilePicture?.displayImage,
+        slug: data?.vanityName,
+        logo: user?.avatar || data?.profilePicture?.displayImage,
 
-      description: data?.localizedHeadline,
-      linkedinUrl: `https://www.linkedin.com/in/${data?.vanityName}`,
-      // cover: data?.coverV2?.original,
-      // websiteUrl: data?.websiteUrl,
-      // tags: data?.tags,
-      // industries: data?.industries,
-    });
+        description: data?.localizedHeadline,
+        linkedinUrl: `https://www.linkedin.com/in/${data?.vanityName}`,
+        // cover: data?.coverV2?.original,
+        // websiteUrl: data?.websiteUrl,
+        // tags: data?.tags,
+        // industries: data?.industries,
+      },
+      {
+        upsert: true,
+        new: true,
+      }
+    );
 
     return ctx.json(
       {
@@ -241,6 +250,19 @@ export const getOrganizationListFormLinkedin = async (ctx: Context) => {
     const organizations = await Promise.allSettled(
       organizationIds.map(async (id: any) => {
         try {
+          if (!id) {
+            return null;
+          }
+
+          // check if organization already exists
+          const existingOrganization = await LinkedinProfile.findOne({
+            linkedinId: id,
+          });
+
+          if (existingOrganization) {
+            return existingOrganization;
+          }
+
           const { data: orgDetails, error } = await fetchOrganizationDetails(
             id,
             headers
