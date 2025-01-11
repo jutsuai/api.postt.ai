@@ -43,6 +43,8 @@ const imagePublish = async (postId: any) => {
       media: post.media,
     });
 
+    console.log("uploadResponse : ", uploadResponse);
+
     console.log("Image uploaded to LinkedIn successfully.");
 
     // 3. Create the LinkedIn Post

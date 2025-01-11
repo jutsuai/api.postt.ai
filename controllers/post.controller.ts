@@ -4,7 +4,8 @@ import axios from "axios";
 import { CUSTOMIZATION_DETAILS, SLIDE_DETAILS } from "../default/carousel";
 import generatePDF from "../components/generatePDF";
 import Schedule from "../models/schedule.model";
-import publishPostLinkedin from "../components/linkedinPublish/documentPublish";
+import documentPublish from "../components/linkedinPublish/documentPublish";
+import imagePublish from "../components/linkedinPublish/imagePublish";
 
 /**
  * @api {get} /posts
@@ -223,23 +224,52 @@ export const createTextPost = async (c: Context) => {
  * @apiGroup posts
  * @access Private
  */
-export const createImagePost = async (c: Context) => {
-  const userId = await c.get("user")._id;
+export const createImagePost = async (ctx: Context) => {
+  const userId = await ctx.get("user")._id;
+  const body = await ctx.req.json();
 
   try {
+    console.log("body: ", body);
+
     const post = await Post.create({
-      ...c.req.json(),
+      ...body,
       type: "image",
       createdBy: userId,
     });
 
-    return c.json({
-      success: true,
-      data: post,
-      message: "Image post created successfully",
-    });
+    if (body?.scheduledAt) {
+      await Schedule.create({
+        createdBy: userId,
+        postId: post?._id,
+        status: "scheduled",
+        scheduledAt: body.scheduledAt,
+      });
+
+      post.status = "scheduled";
+      await post.save();
+
+      return ctx.json(
+        {
+          success: true,
+          data: post,
+          message: "Post scheduled",
+        },
+        200
+      );
+    } else {
+      const { data, error } = await imagePublish(post._id);
+
+      return ctx.json(
+        {
+          success: true,
+          data,
+          message: "Post published",
+        },
+        200
+      );
+    }
   } catch (error: any) {
-    return c.json(
+    return ctx.json(
       {
         success: false,
         data: error,
@@ -277,7 +307,7 @@ export const createVideoPost = async (c: Context) => {
         data: error,
         message: "Post not created",
       },
-      error.status
+      400
     );
   }
 };
@@ -342,7 +372,7 @@ export const publishPost = async (ctx: Context) => {
   const body = await ctx.req.json();
 
   try {
-    const post = await Post.findById(postId);
+    const post = (await Post.findById(postId)) as any;
     console.log("post: ", post);
 
     if (!post) {
@@ -375,14 +405,18 @@ export const publishPost = async (ctx: Context) => {
           scheduledAt: body.scheduledAt,
         });
 
-        const updatePost = await Post.findByIdAndUpdate(
-          postId,
-          {
-            status: "scheduled",
-            media,
-          },
-          { new: true }
-        );
+        // const updatePost = await Post.findByIdAndUpdate(
+        //   postId,
+        //   {
+        //     status: "scheduled",
+        //     media,
+        //   },
+        //   { new: true }
+        // );
+
+        post.status = "scheduled";
+        post.media = media;
+        await post.save();
 
         return ctx.json(
           {
@@ -395,9 +429,11 @@ export const publishPost = async (ctx: Context) => {
       } else {
         // Publish the post
         console.log("This is a published post");
-        await Post.findByIdAndUpdate(postId, { media });
+        // await Post.findByIdAndUpdate(postId, { media });
+        post.media = media;
+        await post.save();
 
-        const { data, error } = await publishPostLinkedin(postId);
+        const { data, error } = await documentPublish(postId);
 
         return ctx.json(
           { success: true, data, message: "Post published" },
