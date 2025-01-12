@@ -6,7 +6,7 @@ import documentPublish from "./components/linkedinPublish/documentPublish";
 
 const agenda = new Agenda({
   db: { address: process.env.MONGO_URI as string },
-  processEvery: "5 minute", // Check for jobs every minute
+  processEvery: "1 minute", // Check for jobs every 5 minutes
 });
 
 const updateSchedule = async ({
