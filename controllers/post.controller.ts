@@ -6,6 +6,7 @@ import generatePDF from "../components/generatePDF";
 import Schedule from "../models/schedule.model";
 import documentPublish from "../components/linkedinPublish/documentPublish";
 import imagePublish from "../components/linkedinPublish/imagePublish";
+import textPublish from "../components/linkedinPublish/textPublish";
 
 /**
  * @api {get} /posts
@@ -16,10 +17,29 @@ export const getAllPosts = async (c: Context) => {
   const userId = await c.get("user")._id;
 
   try {
-    const posts = await Post.find({ createdBy: userId }).sort({
-      createdAt: -1,
-    });
-
+    const posts = await Post.aggregate([
+      { $match: { createdBy: userId } },
+      {
+        $lookup: {
+          from: "schedules", // Replace with your actual Schedule collection name
+          localField: "_id", // Field in the Post model that references the Schedule
+          foreignField: "postId", // Field in the Schedule model that stores the Post ID
+          as: "scheduleData", // Resulting field for joined schedule data
+        },
+      },
+      {
+        $addFields: {
+          scheduledAt: {
+            $cond: [
+              { $eq: ["$status", "scheduled"] }, // Only include scheduleData for scheduled posts
+              { $arrayElemAt: ["$scheduleData.scheduledAt", 0] }, // Extract the first matching schedule's scheduledAt field
+              null, // Set scheduledAt to null for non-scheduled posts
+            ],
+          },
+        },
+      },
+      { $sort: { createdAt: -1 } }, // Sort posts by createdAt in descending order
+    ]);
     return c.json({
       success: true,
       data: posts,
@@ -137,9 +157,11 @@ export const getPostByIdSync = async (ctx: Context) => {
  * @access Private
  */
 export const updatePost = async (c: Context) => {
+  const postId = await c.req.param("postId");
+  const body = await c.req.json();
+
   try {
-    const { postId } = await c.req.param();
-    const updatedPost = await Post.findByIdAndUpdate(postId, c.req.json(), {
+    const updatedPost = await Post.findByIdAndUpdate(postId, body, {
       new: true,
       runValidators: true,
     });
@@ -150,6 +172,7 @@ export const updatePost = async (c: Context) => {
       message: "Post updated successfully",
     });
   } catch (error: any) {
+    console.log("error: ", error);
     return c.json(
       {
         success: false,
@@ -192,23 +215,25 @@ export const deletePost = async (c: Context) => {
  * @apiGroup posts
  * @access Private
  */
-export const createTextPost = async (c: Context) => {
-  const userId = await c.get("user")._id;
+export const createTextPost = async (ctx: Context) => {
+  const userId = await ctx.get("user")._id;
+  const body = await ctx.req.json();
 
   try {
     const post = await Post.create({
-      ...c.req.json(),
+      ...body,
       type: "text",
+      status: "draft",
       createdBy: userId,
     });
 
-    return c.json({
+    return ctx.json({
       success: true,
       data: post,
       message: "Text post created successfully",
     });
   } catch (error: any) {
-    return c.json(
+    return ctx.json(
       {
         success: false,
         data: error,
@@ -229,45 +254,18 @@ export const createImagePost = async (ctx: Context) => {
   const body = await ctx.req.json();
 
   try {
-    console.log("body: ", body);
-
     const post = await Post.create({
       ...body,
       type: "image",
+      status: "draft",
       createdBy: userId,
     });
 
-    if (body?.scheduledAt) {
-      await Schedule.create({
-        createdBy: userId,
-        postId: post?._id,
-        status: "scheduled",
-        scheduledAt: body.scheduledAt,
-      });
-
-      post.status = "scheduled";
-      await post.save();
-
-      return ctx.json(
-        {
-          success: true,
-          data: post,
-          message: "Post scheduled",
-        },
-        200
-      );
-    } else {
-      const { data, error } = await imagePublish(post._id);
-
-      return ctx.json(
-        {
-          success: true,
-          data,
-          message: "Post published",
-        },
-        200
-      );
-    }
+    return ctx.json({
+      success: true,
+      data: post,
+      message: "Image post created successfully",
+    });
   } catch (error: any) {
     return ctx.json(
       {
@@ -278,6 +276,60 @@ export const createImagePost = async (ctx: Context) => {
       error.status
     );
   }
+
+  // const userId = await ctx.get("user")._id;
+  // const body = await ctx.req.json();
+
+  // try {
+  //   console.log("body: ", body);
+
+  //   const post = await Post.create({
+  //     ...body,
+  //     type: "image",
+  //     createdBy: userId,
+  //   });
+
+  //   if (body?.scheduledAt) {
+  //     await Schedule.create({
+  //       createdBy: userId,
+  //       postId: post?._id,
+  //       status: "scheduled",
+  //       scheduledAt: body.scheduledAt,
+  //     });
+
+  //     post.status = "scheduled";
+  //     await post.save();
+
+  //     return ctx.json(
+  //       {
+  //         success: true,
+  //         data: post,
+  //         message: "Post scheduled",
+  //       },
+  //       200
+  //     );
+  //   } else {
+  //     const { data, error } = await imagePublish(post._id);
+
+  //     return ctx.json(
+  //       {
+  //         success: true,
+  //         data,
+  //         message: "Post published",
+  //       },
+  //       200
+  //     );
+  //   }
+  // } catch (error: any) {
+  //   return ctx.json(
+  //     {
+  //       success: false,
+  //       data: error,
+  //       message: "Post not created",
+  //     },
+  //     error.status
+  //   );
+  // }
 };
 
 /**
@@ -366,80 +418,45 @@ export const publishPost = async (ctx: Context) => {
   const postId = await ctx.req.param("postId");
   const userId = await ctx.get("user")._id;
 
-  console.log("postId: ", postId);
-  console.log("userId: ", userId);
-  // commentary,  scheduledAt, author, authorType,
+  // commentary, scheduledAt, author, authorType,
   const body = await ctx.req.json();
 
   try {
-    const post = (await Post.findById(postId)) as any;
-    console.log("post: ", post);
+    // const post = (await Post.findById(postId)) as any;
+    const post = await Post.findByIdAndUpdate(postId, body, {
+      new: true,
+      runValidators: true,
+    });
+    console.log("=========================post", post);
 
     if (!post) {
-      return ctx.json(
-        {
-          success: false,
-          message: "Post not found",
-        },
-        404
-      );
+      return ctx.json({ success: false, message: "Post not found" }, 404);
     }
 
     if (post.type === "carousel") {
-      const { data: media, error: mediaError } = await generatePDF({
-        carouselId: post.contentReference,
+      return carouselController({
+        ctx,
+        post,
+        postId,
         userId,
+        body,
       });
-
-      if (mediaError) {
-        return ctx.json({ success: false, message: mediaError }, 400);
-      }
-
-      if (body?.scheduledAt) {
-        // Schedule the post
-        console.log("This is a scheduled post");
-        await Schedule.create({
-          createdBy: userId,
-          postId: postId,
-          status: "scheduled",
-          scheduledAt: body.scheduledAt,
-        });
-
-        // const updatePost = await Post.findByIdAndUpdate(
-        //   postId,
-        //   {
-        //     status: "scheduled",
-        //     media,
-        //   },
-        //   { new: true }
-        // );
-
-        post.status = "scheduled";
-        post.media = media;
-        await post.save();
-
-        return ctx.json(
-          {
-            success: true,
-            data: updatePost,
-            message: "Post scheduled",
-          },
-          200
-        );
-      } else {
-        // Publish the post
-        console.log("This is a published post");
-        // await Post.findByIdAndUpdate(postId, { media });
-        post.media = media;
-        await post.save();
-
-        const { data, error } = await documentPublish(postId);
-
-        return ctx.json(
-          { success: true, data, message: "Post published" },
-          200
-        );
-      }
+    } else if (post.type === "image") {
+      return imageController({
+        ctx,
+        post,
+        postId,
+        userId,
+        body,
+      });
+    } else if (post.type === "text") {
+      return textController({
+        ctx,
+        post,
+        postId,
+        userId,
+        body,
+      });
     }
   } catch (error: any) {
     return ctx.json(
@@ -450,5 +467,167 @@ export const publishPost = async (ctx: Context) => {
       },
       error.status
     );
+  }
+};
+
+const textController = async ({
+  ctx,
+  post,
+  postId,
+  userId,
+  body,
+}: {
+  ctx: Context;
+  post: any;
+  postId: string;
+  userId: string;
+  body: any;
+}) => {
+  if (body?.scheduledAt) {
+    // Schedule the post
+    console.log("This is a text scheduled post");
+    const schedule = await Schedule.findOneAndUpdate(
+      { postId: postId },
+      {
+        createdBy: userId,
+        postId: postId,
+        status: "scheduled",
+        scheduledAt: body.scheduledAt,
+      },
+      { new: true, upsert: true }
+    );
+
+    console.log("schedule", schedule);
+
+    post.status = "scheduled";
+    await post.save();
+
+    return ctx.json(
+      {
+        success: true,
+        data: updatePost,
+        message: "Post scheduled",
+      },
+      200
+    );
+  } else {
+    // Publish the post
+    console.log("This is a text published post");
+    await post.save();
+
+    const { data, error } = await textPublish(postId);
+
+    return ctx.json({ success: true, data, message: "Post published" }, 200);
+  }
+};
+
+const imageController = async ({
+  ctx,
+  post,
+  postId,
+  userId,
+  body,
+}: {
+  ctx: Context;
+  post: any;
+  postId: string;
+  userId: string;
+  body: any;
+}) => {
+  if (body?.scheduledAt) {
+    // Schedule the post
+    console.log("This is a image scheduled post");
+    const schedule = await Schedule.findOneAndUpdate(
+      { postId: postId },
+      {
+        createdBy: userId,
+        postId: postId,
+        status: "scheduled",
+        scheduledAt: body.scheduledAt,
+      },
+      { new: true, upsert: true }
+    );
+
+    console.log("schedule", schedule);
+
+    post.status = "scheduled";
+    await post.save();
+
+    return ctx.json(
+      {
+        success: true,
+        data: updatePost,
+        message: "Post scheduled",
+      },
+      200
+    );
+  } else {
+    // Publish the post
+    console.log("This is a image published post");
+    await post.save();
+
+    const { data, error } = await imagePublish(postId);
+
+    return ctx.json({ success: true, data, message: "Post published" }, 200);
+  }
+};
+
+const carouselController = async ({
+  ctx,
+  post,
+  postId,
+  userId,
+  body,
+}: {
+  ctx: Context;
+  post: any;
+  postId: string;
+  userId: string;
+  body: any;
+}) => {
+  const { data: media, error: mediaError } = await generatePDF({
+    carouselId: post.contentReference,
+    userId,
+  });
+
+  if (mediaError) {
+    return ctx.json({ success: false, message: mediaError }, 400);
+  }
+
+  if (body?.scheduledAt) {
+    // Schedule the post
+    console.log("This is a carousel scheduled post");
+    await Schedule.findOneAndUpdate(
+      { postId: postId },
+      {
+        createdBy: userId,
+        postId: postId,
+        status: "scheduled",
+        scheduledAt: body.scheduledAt,
+      },
+      { new: true, upsert: true }
+    );
+
+    post.status = "scheduled";
+    post.media = media;
+    await post.save();
+
+    return ctx.json(
+      {
+        success: true,
+        data: updatePost,
+        message: "Post scheduled",
+      },
+      200
+    );
+  } else {
+    // Publish the post
+    console.log("This is a carousel  published post");
+    post.media = media;
+    await post.save();
+
+    const { data, error } = await documentPublish(postId);
+
+    return ctx.json({ success: true, data, message: "Post published" }, 200);
   }
 };

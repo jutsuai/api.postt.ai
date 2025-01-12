@@ -1,4 +1,4 @@
-import { Carousel } from "../models";
+import { Carousel, Post } from "../models";
 import { PDFDocument } from "pdf-lib";
 import puppeteer from "puppeteer";
 import { AWSPut } from "../utils/aws.util";
@@ -14,11 +14,23 @@ const generatePDF = async ({
     console.log("Generating PDF for carousel with ID:", carouselId);
     console.log("User ID:", userId);
 
-    const carousel = await Carousel.findById(carouselId);
+    const carousel = (await Carousel.findById(carouselId)) as any;
 
     if (!carousel) {
       throw new Error(`Carousel with ID ${carouselId} not found.`);
     }
+
+    // Delete the existing PDF file if it exists
+    // const post = await Post.findOne({ contentReference: carouselId });
+
+    // if (!post) {
+    //   throw new Error(`Post with carousel ID ${carouselId} not found.`);
+    // }
+
+    // if (post.media.url) {
+    //   console.log("Deleting existing PDF file: ", post.media.url);
+    //   await AWSDelete(post.media.url);
+    // }
 
     const { slides, customizations }: any = carousel;
 
@@ -39,11 +51,13 @@ const generatePDF = async ({
       await page.goto(websiteUrl, { waitUntil: "networkidle2" });
       // Wait for 2 seconds to ensure all resources are loaded
       await page.waitForNetworkIdle({
-        idleTime: 1500,
+        idleTime: 1750,
       });
 
       // Capture the screenshot of the page as an image buffer
       const screenshotBuffer = await page.screenshot({
+        type: "jpeg",
+        quality: 100,
         clip: {
           x: 0,
           y: 0,
@@ -74,11 +88,12 @@ const generatePDF = async ({
     const finalPdfBuffer = await finalPdfDoc.save();
 
     // Prepare the file for uploading to AWS S3
-    const fileName = `slides_${Date.now()}.pdf`;
+    // const fileName = `slides_${Date.now()}.pdf`;
+    const fileName = `slides_${carouselId}.pdf`;
     const fileType = "application/pdf"; // PDF MIME type
 
     const params = {
-      Key: `linkedin/${userId}/pdfs/${fileName}`,
+      Key: `${process?.env?.NODE_ENV}/linkedin/${userId}/posts/carousels/${fileName}`,
       ContentType: fileType,
       Body: finalPdfBuffer,
     };

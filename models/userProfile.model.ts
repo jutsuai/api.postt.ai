@@ -1,7 +1,7 @@
-import { Schema, model } from "mongoose";
+import { Schema, Types, model } from "mongoose";
 
 interface IUserProfile {
-  createdBy: any;
+  createdBy: Types.ObjectId;
   type: string;
   name: string;
   description: string;

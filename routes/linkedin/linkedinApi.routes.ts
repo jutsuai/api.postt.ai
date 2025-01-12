@@ -20,10 +20,10 @@ management.get("/image/:imageUrn", protect, (c) => linkedinApi.loadImage(c));
 // Get User Details
 management.get("/me", protect, (c) => linkedinApi.getUserDetails(c));
 
-// Get Organization List for DB
-management.get("/organizations", protect, (c) =>
-  linkedinApi.getOrganizationListFormDB(c)
-);
+// // Get Organization List for DB
+// management.get("/organizations", protect, (c) =>
+//   linkedinApi.getOrganizationListFormDB(c)
+// );
 
 // Get Organization List for Linkedin
 management.get("/organizations/sync", protect, (c) =>

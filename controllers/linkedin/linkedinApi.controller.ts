@@ -186,31 +186,31 @@ export const getUserDetails = async (ctx: Context) => {
  * @apiGroup Management
  * @access private
  */
-export const getOrganizationListFormDB = async (ctx: Context) => {
-  try {
-    const userId = await ctx.get("user")?._id;
+// export const getOrganizationListFormDB = async (ctx: Context) => {
+//   try {
+//     const userId = await ctx.get("user")?._id;
 
-    const organizations = await LinkedinProfile.find({ createdBy: userId });
+//     const organizations = await LinkedinProfile.find({ createdBy: userId });
 
-    return ctx.json({
-      status: 200,
-      success: true,
-      data: organizations,
-      message: "Organization list fetched successfully",
-    });
-  } catch (error) {
-    console.error("Error in getOrganizationList:", error);
+//     return ctx.json({
+//       status: 200,
+//       success: true,
+//       data: organizations,
+//       message: "Organization list fetched successfully",
+//     });
+//   } catch (error) {
+//     console.error("Error in getOrganizationList:", error);
 
-    return ctx.json(
-      {
-        status: 500,
-        success: false,
-        message: "Failed to fetch organization list",
-      },
-      500
-    );
-  }
-};
+//     return ctx.json(
+//       {
+//         status: 500,
+//         success: false,
+//         message: "Failed to fetch organization list",
+//       },
+//       500
+//     );
+//   }
+// };
 
 /**
  * @api {post} /api/v1/management/organizationList Get Organization List  form Linkedin

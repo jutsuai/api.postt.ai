@@ -1,4 +1,4 @@
-import { Schema, model } from "mongoose";
+import { Schema, Types, model } from "mongoose";
 
 interface IPostCarousel {
   slides: {
@@ -35,7 +35,7 @@ interface IPostCarousel {
     };
   };
 
-  createdBy: any;
+  createdBy: Types.ObjectId;
 }
 
 const slideSchema = new Schema({

@@ -2,7 +2,6 @@ import axios from "axios";
 import { Context } from "hono";
 import { Carousel, LinkedinProfile } from "../../models";
 import generatePDF from "../../components/generatePDF";
-import { file } from "bun";
 import { AWSPut } from "../../utils/aws.util";
 import Post from "../../models/post/post.model";
 import publishPostLinkedin from "../../components/linkedinPublish/documentPublish";
@@ -143,9 +142,13 @@ export const updateLinkedinProfile = async (ctx: Context | any) => {
  */
 export const deleteLinkedinProfile = async (ctx: Context | any) => {
   const profileId = await ctx.req.param("profileId");
+  const userId = await ctx.get("user")?._id;
 
   try {
-    await LinkedinProfile.findByIdAndDelete(profileId);
+    await LinkedinProfile.findOneAndDelete({
+      _id: profileId,
+      createdBy: userId,
+    });
 
     return ctx.json({
       status: 200,

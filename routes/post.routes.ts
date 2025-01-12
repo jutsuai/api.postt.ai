@@ -25,7 +25,7 @@ posts.delete("/:postId", protect, (c) => postController.deletePost(c));
 posts.post("/text", protect, (c) => postController.createTextPost(c));
 
 // Create a image post
-posts.post("/image/publish", protect, (c) => postController.createImagePost(c));
+posts.post("/image", protect, (c) => postController.createImagePost(c));
 
 // Create a video post
 posts.post("/video", protect, (c) => postController.createVideoPost(c));
@@ -34,8 +34,6 @@ posts.post("/video", protect, (c) => postController.createVideoPost(c));
 posts.post("/carousel", protect, (c) => postController.createCarouselPost(c));
 
 // publish a carousel post
-posts.post("/:postId/carousel/publish", protect, (c) =>
-  postController.publishPost(c)
-);
+posts.post("/:postId/publish", protect, (c) => postController.publishPost(c));
 
 export default posts;

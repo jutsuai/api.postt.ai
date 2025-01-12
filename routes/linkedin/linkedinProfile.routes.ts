@@ -28,6 +28,11 @@ profiles.get("/:profileId", protect, (c) =>
   linkedinPostController.getLinkedinProfile(c)
 );
 
+// Delete a specific LinkedIn profile
+profiles.delete("/:profileId", protect, (c) =>
+  linkedinPostController.deleteLinkedinProfile(c)
+);
+
 // Create a new LinkedIn profile
 profiles.post("/", protect, (c) =>
   linkedinPostController.createLinkedinProfile(c)
