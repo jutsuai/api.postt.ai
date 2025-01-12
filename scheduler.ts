@@ -106,7 +106,7 @@ const startScheduler = async () => {
   console.log("Agenda scheduler started.");
 
   // Schedule recurring jobs
-  await agenda.every("5 minute", "publish posts");
+  await agenda.every("1 minute", "publish posts");
 };
 
 export default startScheduler;
