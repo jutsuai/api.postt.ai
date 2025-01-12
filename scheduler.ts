@@ -1,12 +1,12 @@
 import Agenda from "agenda";
-import { Post, Schedule, User } from "./models";
+import { Post, Schedule } from "./models";
 import textPublish from "./components/linkedinPublish/textPublish";
 import imagePublish from "./components/linkedinPublish/imagePublish";
 import documentPublish from "./components/linkedinPublish/documentPublish";
 
 const agenda = new Agenda({
   db: { address: process.env.MONGO_URI as string },
-  processEvery: "15 minute", // Check for jobs every minute
+  processEvery: "5 minute", // Check for jobs every minute
 });
 
 const updateSchedule = async ({
@@ -56,7 +56,6 @@ agenda.define("publish posts", async (job: any) => {
         );
 
         const post = (await Post.findById(scheduledTask.postId)) as any;
-        const user = await User.findById(post?.createdBy);
 
         if (post.type === "text") {
           const { data, error } = await textPublish(scheduledTask.postId);
@@ -107,7 +106,7 @@ const startScheduler = async () => {
   console.log("Agenda scheduler started.");
 
   // Schedule recurring jobs
-  await agenda.every("15 minute", "publish posts");
+  await agenda.every("5 minute", "publish posts");
 };
 
 export default startScheduler;
