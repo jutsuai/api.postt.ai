@@ -13,6 +13,7 @@ import {
   Assets,
 } from "./routes";
 import { errorHandler, notFound } from "./middlewares";
+import startScheduler from "./scheduler";
 // import post from "./routes/linkedin/linkedinPost.routes";
 
 // Initialize the Hono app
@@ -60,6 +61,10 @@ app.notFound((c) => {
   return error;
 });
 
+// Start the Scheduler
+startScheduler();
+
+// Configure the Port
 const port = Bun.env.PORT || 8000;
 
 export default {

@@ -3,9 +3,8 @@ import { Post } from "../../models";
 import getBinaryFromUrl from "../getBinaryFromUrl";
 
 const documentPublish = async (postId: any) => {
+  const post = (await Post.findById(postId).populate("createdBy")) as any;
   try {
-    const post = (await Post.findById(postId).populate("createdBy")) as any;
-
     const createdBy = post?.createdBy;
     const accessToken = createdBy?.tokens?.management?.access_token;
 
@@ -87,6 +86,9 @@ const documentPublish = async (postId: any) => {
     };
   } catch (error: any) {
     console.error("Error publishPostLinkedin :", error);
+
+    post.status = "failed";
+    await post.save();
 
     return {
       data: null,
