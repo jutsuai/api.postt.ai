@@ -3,9 +3,9 @@ import { Post } from "../../models";
 import getBinaryFromUrl from "../getBinaryFromUrl";
 
 const imagePublish = async (postId: any) => {
+  const post = (await Post.findById(postId).populate("createdBy")) as any;
   try {
     console.log("Fetching post from database...");
-    const post = (await Post.findById(postId).populate("createdBy")) as any;
     console.log("Post fetched successfully:", post);
 
     const createdBy = post?.createdBy;
@@ -109,6 +109,8 @@ const imagePublish = async (postId: any) => {
     };
   } catch (error: any) {
     console.error("Error in publishPostLinkedin:", error);
+    post.status = "failed";
+    await post.save();
     return {
       data: null,
       error: "Failed to publish post on LinkedIn",
