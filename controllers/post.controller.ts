@@ -18,24 +18,37 @@ export const getAllPosts = async (c: Context) => {
 
   try {
     const posts = await Post.aggregate([
-      { $match: { createdBy: userId } },
+      { $match: { createdBy: userId } }, // Match posts created by the given user ID
       {
         $lookup: {
-          from: "schedules", // Replace with your actual Schedule collection name
+          from: "schedules", // Collection name for Schedule
           localField: "_id", // Field in the Post model that references the Schedule
           foreignField: "postId", // Field in the Schedule model that stores the Post ID
-          as: "scheduleData", // Resulting field for joined schedule data
+          as: "scheduleData", // Temporary array field to store schedule data
         },
       },
+      { $unwind: { path: "$scheduleData", preserveNullAndEmptyArrays: true } }, // Flatten scheduleData to a single object, or null if none exists
       {
         $addFields: {
           scheduledAt: {
             $cond: [
-              { $eq: ["$status", "scheduled"] }, // Only include scheduleData for scheduled posts
-              { $arrayElemAt: ["$scheduleData.scheduledAt", 0] }, // Extract the first matching schedule's scheduledAt field
+              { $eq: ["$status", "scheduled"] }, // Only include scheduledAt for scheduled posts
+              "$scheduleData.scheduledAt", // Use the scheduledAt field from the schedule object
               null, // Set scheduledAt to null for non-scheduled posts
             ],
           },
+          publishedAt: {
+            $cond: [
+              { $eq: ["$status", "published"] }, // Only include publishedAt for published posts
+              "$scheduleData.publishedAt", // Use the publishedAt field from the schedule object
+              null, // Set publishedAt to null for non-published posts
+            ],
+          },
+        },
+      },
+      {
+        $project: {
+          scheduleData: 0, // Optionally remove the scheduleData field to keep the result clean
         },
       },
       { $sort: { createdAt: -1 } }, // Sort posts by createdAt in descending order
