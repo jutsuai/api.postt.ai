@@ -34,6 +34,8 @@ const documentPublish = async (postId: any) => {
       media: post.media,
     });
 
+    console.log("Upload Response: ", uploadResponse);
+
     console.log("====================4");
     // 4. Create the linkedin post
     const postData = {
@@ -47,9 +49,10 @@ const documentPublish = async (postId: any) => {
       },
       content: {
         media: {
-          title:
-            post?.media?.name.split(".")[0] ||
-            "An document created and uploaded by postt.ai",
+          // title should first 3-4 words of the post commentary or if the commentaryis empty then post.media.name
+          title: getPostTitle(post),
+          // post?.media?.name.split(".")[0] ||
+          // "An document created and uploaded by postt.ai",
           id: document,
         },
       },
@@ -69,9 +72,21 @@ const documentPublish = async (postId: any) => {
         },
       })
       .then((res) => {
-        console.log("=========== > res", res.data);
+        console.log(
+          "=========== > res.status: ",
+          res.status,
+          " ---- res.data --- ",
+          res
+        );
 
-        post.linkedinPostId = res.data.id;
+        // Extract the post ID from the header
+        const linkedinPostId =
+          res.headers["x-linkedin-id"] ||
+          res.headers["x-restli-id"] ||
+          res.data.id;
+        console.log("LinkedIn Post ID:", linkedinPostId);
+
+        post.linkedinPostId = linkedinPostId;
         post.status = "published";
         post.publishedAt = new Date();
         post.save();
@@ -132,6 +147,8 @@ const registerDocument = async ({
 
     const { uploadUrl, document } = registerResponse.data.value;
 
+    console.log("registerResponse: ", registerResponse.data);
+
     return {
       data: {
         uploadUrl,
@@ -162,23 +179,39 @@ const uploadDocument = async ({
     console.log("error", error);
     console.log("media", media);
 
-    await axios.put(uploadUrl, data?.buffer, {
+    const uploading = await axios.put(uploadUrl, data?.buffer, {
       headers: {
         "Content-Type": media.fileType,
       },
     });
 
+    console.log("Uploading: ", uploading.data);
+
     return {
-      data: null,
+      data: uploading.data,
       error: null,
     };
   } catch (error: any) {
     console.error("Error uploading document:", error);
     return {
       data: null,
-      error: "Failed to upload document",
+      error: error.message || "Failed to upload document",
     };
   }
 };
+
+function getPostTitle(post: any) {
+  if (post?.commentary && post?.commentary?.trim().length > 0) {
+    // Use the first 3-4 words of the commentary as the title
+    const words = post.commentary.trim().split(/\s+/).slice(0, 4);
+    return words.join(" ");
+  } else if (post?.media && post?.media?.name) {
+    // Fallback to media name if commentary is empty
+    return post?.media?.name?.split(".")[0];
+  } else {
+    // Provide a default title if neither commentary nor media name exists
+    return "Untitled PDF";
+  }
+}
 
 export default documentPublish;

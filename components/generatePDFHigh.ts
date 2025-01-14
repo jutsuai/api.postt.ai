@@ -49,15 +49,15 @@ const generatePDF = async ({
       const page = await context.newPage();
       await page.goto(websiteUrl, { waitUntil: "networkidle" });
 
-      // Wait for 2 seconds to ensure page is fully loaded
-      await page.waitForTimeout(2000);
+      // // Wait for 2 seconds to ensure page is fully loaded
+      // await page.waitForTimeout(2000);
 
-      const pdfBuffer = await page.pdf({
-        format: "A4",
+      const pdfBuffer = (await page.pdf({
+        // format: "A4",
         printBackground: true,
         width: customizations?.size?.width || 512,
         height: customizations?.size?.height || 640,
-      });
+      })) as any;
       pdfBuffers.push(pdfBuffer);
 
       await page.close();

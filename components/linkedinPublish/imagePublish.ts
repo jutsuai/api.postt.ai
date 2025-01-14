@@ -86,22 +86,36 @@ const imagePublish = async (postId: any) => {
 
     console.log("Creating LinkedIn post with the following data:", postData);
 
-    const postResponse = await axios.post(
-      "https://api.linkedin.com/v2/ugcPosts",
-      postData,
-      {
+    await axios
+      .post("https://api.linkedin.com/v2/ugcPosts", postData, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
           "Content-Type": "application/json",
         },
-      }
-    );
+      })
+      .then((res) => {
+        console.log(
+          "=========== > res.status: ",
+          res.status,
+          " ---- res.data --- ",
+          res
+        );
 
-    // Update the post status in your database
-    post.linkedinPostId = postResponse.data.id;
-    post.status = "published";
-    post.publishedAt = new Date();
-    await post.save();
+        // Extract the post ID from the header
+        const linkedinPostId =
+          res.headers["x-linkedin-id"] ||
+          res.headers["x-restli-id"] ||
+          res.data.id;
+        console.log("LinkedIn Post ID:", linkedinPostId);
+
+        post.linkedinPostId = linkedinPostId;
+        post.status = "published";
+        post.publishedAt = new Date();
+        post.save();
+      })
+      .catch((err) => {
+        console.log("err");
+      });
 
     return {
       data: post,

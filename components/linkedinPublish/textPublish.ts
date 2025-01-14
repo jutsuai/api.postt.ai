@@ -50,9 +50,14 @@ const textPublish = async (postId: any) => {
         },
       })
       .then((res) => {
-        console.log("=========== > res", res.data);
+        // Extract the post ID from the header
+        const linkedinPostId =
+          res.headers["x-linkedin-id"] ||
+          res.headers["x-restli-id"] ||
+          res.data.id;
+        console.log("LinkedIn Post ID:", linkedinPostId);
 
-        post.linkedinPostId = res.data.id;
+        post.linkedinPostId = linkedinPostId;
         post.status = "published";
         post.publishedAt = new Date();
         post.save();

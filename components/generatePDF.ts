@@ -2,7 +2,7 @@
 
 import { Carousel } from "../models";
 import { PDFDocument } from "pdf-lib";
-import { chromium } from "playwright";
+import { webkit } from "playwright";
 import { AWSPut } from "../utils/aws.util";
 
 const baseUrl =
@@ -18,7 +18,10 @@ const generatePDF = async ({
   userId: string;
 }) => {
   try {
-    console.log("Generating PDF for carousel with ID:", carouselId);
+    console.log(
+      "Generating Normal Quality PDF for carousel with ID:",
+      carouselId
+    );
     console.log("User ID:", userId);
 
     const carousel = (await Carousel.findById(carouselId)) as any;
@@ -38,7 +41,7 @@ const generatePDF = async ({
       return { data: null, error: "Invalid URL" };
     }
 
-    const browser = await chromium.launch();
+    const browser = await webkit.launch();
     const screenshotBuffers = [];
 
     for (const websiteUrl of urls) {
