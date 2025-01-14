@@ -3,6 +3,11 @@ import { PDFDocument } from "pdf-lib";
 import puppeteer from "puppeteer";
 import { AWSPut } from "../utils/aws.util";
 
+const baseUrl =
+  process.env.NODE_ENV === "production"
+    ? "https://app.postt.ai"
+    : "http://localhost:3000";
+
 const generatePDF = async ({
   carouselId,
   userId,
@@ -20,22 +25,10 @@ const generatePDF = async ({
       throw new Error(`Carousel with ID ${carouselId} not found.`);
     }
 
-    // Delete the existing PDF file if it exists
-    // const post = await Post.findOne({ contentReference: carouselId });
-
-    // if (!post) {
-    //   throw new Error(`Post with carousel ID ${carouselId} not found.`);
-    // }
-
-    // if (post.media.url) {
-    //   console.log("Deleting existing PDF file: ", post.media.url);
-    //   await AWSDelete(post.media.url);
-    // }
-
     const { slides, customizations }: any = carousel;
 
     const urls = slides.map((slide: any, index: any) => {
-      return `http://localhost:3000/restricted/linkedin/carousel/${carouselId}/slide/${index}`;
+      return `${baseUrl}/restricted/linkedin/carousel/${carouselId}/slide/${index}`;
     });
     console.log("URLs to generate PDF from:", urls);
 
@@ -53,6 +46,8 @@ const generatePDF = async ({
       await page.waitForNetworkIdle({
         idleTime: 1750,
       });
+
+      console.log("Customizations:", customizations);
 
       // Capture the screenshot of the page as an image buffer
       const screenshotBuffer = await page.screenshot({

@@ -1,7 +1,7 @@
 import { Context } from "hono";
 import { Carousel, Post } from "../models";
 import PostCarousel from "../models/post/carousel.model";
-import generatePDF from "../components/generatePDF";
+import generatePDF from "../components/generatePDFHigh";
 
 /**
  * @api {get} /assets/carousels
