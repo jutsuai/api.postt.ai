@@ -20,7 +20,7 @@
     "linkedin-api-client": "^0.3.0",
     "mongoose": "^8.9.3",
     "pdf-lib": "^1.17.1",
-    "puppeteer": "^23.11.1",
+    "playwright": "^1.49.1",
     "sharp": "^0.33.5"
   }
 }

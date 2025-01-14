@@ -1,6 +1,8 @@
+// generatePDFHigh.ts with playwright
+
 import { Carousel } from "../models";
 import { PDFDocument } from "pdf-lib";
-import puppeteer from "puppeteer";
+import { chromium } from "playwright";
 import { AWSPut } from "../utils/aws.util";
 
 const baseUrl =
@@ -39,18 +41,19 @@ const generatePDF = async ({
       return { data: null, error: "Invalid URL" };
     }
 
-    const browser = await puppeteer.launch();
+    const browser = await chromium.launch();
     const pdfBuffers = [];
 
     for (const websiteUrl of urls) {
-      const page = await browser.newPage();
-      await page.goto(websiteUrl, { waitUntil: "networkidle2" });
-      // Wait for 5 seconds
-      await page.waitForNetworkIdle({
-        idleTime: 2000,
-      });
+      const context = await browser.newContext();
+      const page = await context.newPage();
+      await page.goto(websiteUrl, { waitUntil: "networkidle" });
+
+      // Wait for 2 seconds to ensure page is fully loaded
+      await page.waitForTimeout(2000);
 
       const pdfBuffer = await page.pdf({
+        format: "A4",
         printBackground: true,
         width: customizations?.size?.width || 512,
         height: customizations?.size?.height || 640,
@@ -58,6 +61,7 @@ const generatePDF = async ({
       pdfBuffers.push(pdfBuffer);
 
       await page.close();
+      await context.close();
     }
 
     await browser.close();

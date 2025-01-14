@@ -1,6 +1,8 @@
-import { Carousel, Post } from "../models";
+// generatePDF.ts with playwright
+
+import { Carousel } from "../models";
 import { PDFDocument } from "pdf-lib";
-import puppeteer from "puppeteer";
+import { chromium } from "playwright";
 import { AWSPut } from "../utils/aws.util";
 
 const baseUrl =
@@ -36,16 +38,16 @@ const generatePDF = async ({
       return { data: null, error: "Invalid URL" };
     }
 
-    const browser = await puppeteer.launch();
+    const browser = await chromium.launch();
     const screenshotBuffers = [];
 
     for (const websiteUrl of urls) {
-      const page = await browser.newPage();
-      await page.goto(websiteUrl, { waitUntil: "networkidle2" });
+      const context = await browser.newContext();
+      const page = await context.newPage();
+      await page.goto(websiteUrl, { waitUntil: "networkidle" });
+
       // Wait for 2 seconds to ensure all resources are loaded
-      await page.waitForNetworkIdle({
-        idleTime: 1750,
-      });
+      await page.waitForTimeout(2000);
 
       console.log("Customizations:", customizations);
 
@@ -56,13 +58,14 @@ const generatePDF = async ({
         clip: {
           x: 0,
           y: 0,
-          width: customizations?.size?.width,
-          height: customizations?.size?.height,
+          width: customizations?.size?.width || 512,
+          height: customizations?.size?.height || 640,
         },
       });
 
       screenshotBuffers.push(screenshotBuffer);
       await page.close();
+      await context.close();
     }
 
     await browser.close();
@@ -83,7 +86,6 @@ const generatePDF = async ({
     const finalPdfBuffer = await finalPdfDoc.save();
 
     // Prepare the file for uploading to AWS S3
-    // const fileName = `slides_${Date.now()}.pdf`;
     const fileName = `slides_${carouselId}.pdf`;
     const fileType = "application/pdf"; // PDF MIME type
 
