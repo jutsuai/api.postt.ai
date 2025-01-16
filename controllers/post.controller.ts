@@ -2,7 +2,7 @@ import { Context } from "hono";
 import { Carousel, Post } from "../models";
 import axios from "axios";
 import { CUSTOMIZATION_DETAILS, SLIDE_DETAILS } from "../default/carousel";
-import generatePDF from "../components/generatePDF";
+import generatePDF from "../components/generatePDFHigh";
 import Schedule from "../models/schedule.model";
 import documentPublish from "../components/linkedinPublish/documentPublish";
 import imagePublish from "../components/linkedinPublish/imagePublish";

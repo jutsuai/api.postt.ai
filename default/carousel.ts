@@ -14,6 +14,7 @@ export const CUSTOMIZATION_DETAILS = {
     horizontal: "left", // left | center | right
     vertical: "center", // top | center | bottom
   },
+
   createdBy: {
     visible: true,
     horizontal: "left", // left | center | right
