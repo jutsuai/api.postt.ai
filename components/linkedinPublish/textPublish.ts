@@ -1,6 +1,41 @@
 import axios from "axios";
 import { Post } from "../../models";
-import getBinaryFromUrl from "../getBinaryFromUrl";
+// import getBinaryFromUrl from "../getBinaryFromUrl";
+
+// Function to convert text to Unicode bold
+function toUnicodeBold(text: any) {
+  return text
+    .split("")
+    .map((char: any) => {
+      const code = char.charCodeAt(0);
+      if (code >= 65 && code <= 90) {
+        // Uppercase A-Z
+        return String.fromCharCode(code + 0x1d3e0 - 65);
+      } else if (code >= 97 && code <= 122) {
+        // Lowercase a-z
+        return String.fromCharCode(code + 0x1d3e0 - 97);
+      } else if (code >= 48 && code <= 57) {
+        // Numbers 0-9
+        return String.fromCharCode(code + 0x1d7ce - 48);
+      } else {
+        return char; // Non-alphanumeric characters remain unchanged
+      }
+    })
+    .join("");
+}
+
+// Function to process Markdown into Unicode styled text
+function convertMarkdownToUnicode(text: any) {
+  return text
+    .replace(/\*(.*?)\*/g, (_: any, match: any) => toUnicodeBold(match)) // Bold
+    .replace(/_(.*?)_/g, (_: any, match: any) => `\u1D608${match}\u1D608`) // Italic (approximate with enclosing)
+    .replace(/~(.*?)~/g, (_: any, match: any) =>
+      match
+        .split("")
+        .map((c: any) => `̶${c}`)
+        .join("")
+    ); // Strikethrough
+}
 
 const textPublish = async (postId: any) => {
   const post = (await Post.findById(postId).populate("createdBy")) as any;
@@ -27,8 +62,8 @@ const textPublish = async (postId: any) => {
     // 4. Create the linkedin post
     const postData = {
       author: authorUrn,
-      commentary:
-        "Hello, these are some bullet points:\n\n\\* Point 1\n\\* Point 2\n\\* Point 3 𝐒𝐚𝐢𝐝𝐮𝐥 𝐛𝐚𝐝𝐡𝐨𝐧",
+      commentary: convertMarkdownToUnicode(post?.commentary),
+      // "Hello, these are some bullet points:\n\n\\* Point 1\n\\* Point 2\n\\* Point 3 𝐒𝐚𝐢𝐝𝐮𝐥 𝐛𝐚𝐝𝐡𝐨𝐧",
       visibility: "PUBLIC",
       distribution: {
         feedDistribution: "MAIN_FEED",
