@@ -13,12 +13,48 @@ import textPublish from "../components/linkedinPublish/textPublish";
  * @apiGroup posts
  * @access Private
  */
-export const getAllPosts = async (c: Context) => {
-  const userId = await c.get("user")._id;
-
+export const getAllPosts = async (ctx: Context) => {
   try {
+    // Extract user ID from the request context/session
+    const user = await ctx.get("user");
+    if (!user || !user._id) {
+      return ctx.json({ success: false, message: "Unauthorized" }, 401);
+    }
+    const userId = user._id;
+
+    // Extract query parameters for filters and pagination
+    const query = ctx.req.query();
+    const { type, status, search, page = "1", limit = "10" } = query;
+
+    const matchFilters: any = {
+      createdBy: userId, // Always filter by the logged-in user
+    };
+
+    // Add type filter if provided
+    if (type) {
+      matchFilters.type = type;
+    }
+
+    // Add status filter if provided
+    if (status) {
+      matchFilters.status = status;
+    }
+
+    // Add search filter for commentary if provided
+    if (search) {
+      matchFilters["commentary"] = { $regex: search, $options: "i" }; // Case-insensitive regex for commentary
+    }
+
+    // Convert pagination parameters to numbers
+    const pageNumber = Math.max(1, parseInt(page));
+    const pageSize = Math.max(1, parseInt(limit));
+
+    // Calculate skip value for pagination
+    const skip = (pageNumber - 1) * pageSize;
+
+    // Use Mongoose or MongoDB aggregate to fetch posts with the given filters and pagination
     const posts = await Post.aggregate([
-      { $match: { createdBy: userId } }, // Match posts created by the given user ID
+      { $match: matchFilters }, // Apply dynamic filters
       {
         $lookup: {
           from: "schedules", // Collection name for Schedule
@@ -27,45 +63,56 @@ export const getAllPosts = async (c: Context) => {
           as: "scheduleData", // Temporary array field to store schedule data
         },
       },
-      { $unwind: { path: "$scheduleData", preserveNullAndEmptyArrays: true } }, // Flatten scheduleData to a single object, or null if none exists
+      { $unwind: { path: "$scheduleData", preserveNullAndEmptyArrays: true } }, // Flatten scheduleData
       {
         $addFields: {
           scheduledAt: {
             $cond: [
-              { $eq: ["$status", "scheduled"] }, // Only include scheduledAt for scheduled posts
-              "$scheduleData.scheduledAt", // Use the scheduledAt field from the schedule object
-              null, // Set scheduledAt to null for non-scheduled posts
+              { $eq: ["$status", "scheduled"] },
+              "$scheduleData.scheduledAt",
+              null,
             ],
           },
           publishedAt: {
             $cond: [
-              { $eq: ["$status", "published"] }, // Only include publishedAt for published posts
-              "$scheduleData.publishedAt", // Use the publishedAt field from the schedule object
-              null, // Set publishedAt to null for non-published posts
+              { $eq: ["$status", "published"] },
+              "$scheduleData.publishedAt",
+              null,
             ],
           },
         },
       },
       {
         $project: {
-          scheduleData: 0, // Optionally remove the scheduleData field to keep the result clean
+          scheduleData: 0, // Remove scheduleData field to keep the result clean
         },
       },
       { $sort: { createdAt: -1 } }, // Sort posts by createdAt in descending order
+      { $skip: skip }, // Skip documents for pagination
+      { $limit: pageSize }, // Limit documents for pagination
     ]);
-    return c.json({
+
+    // Get the total count of matching posts (without pagination)
+    const totalCount = await Post.countDocuments(matchFilters);
+
+    return ctx.json({
       success: true,
       data: posts,
+      pagination: {
+        total: totalCount,
+        page: pageNumber,
+        limit: pageSize,
+      },
       message: "All posts fetched successfully",
     });
   } catch (error: any) {
-    return c.json(
+    return ctx.json(
       {
         success: false,
-        data: error,
-        message: "Posts not found",
+        message: "Failed to fetch posts",
+        error: error.message || "An error occurred",
       },
-      error.status
+      500
     );
   }
 };
@@ -121,12 +168,8 @@ export const getPostByIdSync = async (ctx: Context) => {
 
   const linkedinPostId = await ctx.req.param("linkedinPostId");
 
-  console.log("linkedinPostId: ", linkedinPostId);
-
   const accessToken =
     user?.tokens?.management?.access_token || user?.tokens?.auth?.access_token;
-
-  console.log("AccessToken: ", accessToken);
 
   const url = `https://api.linkedin.com/rest/socialActions/${encodeURIComponent(
     linkedinPostId
