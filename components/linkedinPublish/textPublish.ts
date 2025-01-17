@@ -27,7 +27,8 @@ const textPublish = async (postId: any) => {
     // 4. Create the linkedin post
     const postData = {
       author: authorUrn,
-      commentary: post.commentary,
+      commentary:
+        "Hello, these are some bullet points:\n\n\\* Point 1\n\\* Point 2\n\\* Point 3 𝐒𝐚𝐢𝐝𝐮𝐥 𝐛𝐚𝐝𝐡𝐨𝐧",
       visibility: "PUBLIC",
       distribution: {
         feedDistribution: "MAIN_FEED",
@@ -39,6 +40,7 @@ const textPublish = async (postId: any) => {
     };
 
     console.log("postData", postData);
+    console.log("post.commentary", post);
 
     await axios
       .post("https://api.linkedin.com/v2/posts", postData, {

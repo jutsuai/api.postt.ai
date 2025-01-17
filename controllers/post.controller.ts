@@ -121,12 +121,8 @@ export const getPostByIdSync = async (ctx: Context) => {
 
   const linkedinPostId = await ctx.req.param("linkedinPostId");
 
-  console.log("linkedinPostId: ", linkedinPostId);
-
   const accessToken =
     user?.tokens?.management?.access_token || user?.tokens?.auth?.access_token;
-
-  console.log("AccessToken: ", accessToken);
 
   const url = `https://api.linkedin.com/rest/socialActions/${encodeURIComponent(
     linkedinPostId
