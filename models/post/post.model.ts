@@ -59,7 +59,16 @@ const PostSchema = new Schema<IPost>(
     status: {
       type: String,
       required: false,
-      enum: ["draft", "scheduled", "published", "failed"],
+      enum: [
+        "draft",
+        "scheduled",
+        "published",
+        "failed",
+        "failed-download",
+        "failed-upload",
+        "failed-register",
+        "failed-publish",
+      ],
       default: "draft",
     },
   },

@@ -32,6 +32,7 @@ const documentPublish = async (postId: any) => {
     const uploadResponse = await uploadDocument({
       uploadUrl,
       media: post.media,
+      postId,
     });
 
     console.log("Upload Response: ", uploadResponse);
@@ -168,9 +169,11 @@ const registerDocument = async ({
 const uploadDocument = async ({
   uploadUrl,
   media,
+  postId,
 }: {
   uploadUrl: string;
   media: any;
+  postId: any;
 }) => {
   try {
     // 2. Upload the Document
@@ -193,6 +196,7 @@ const uploadDocument = async ({
     };
   } catch (error: any) {
     console.error("Error uploading document:", error);
+    await Post.findByIdAndUpdate(postId, { status: "failed-upload" });
     return {
       data: null,
       error: error.message || "Failed to upload document",

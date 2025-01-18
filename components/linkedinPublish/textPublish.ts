@@ -3,38 +3,77 @@ import { Post } from "../../models";
 // import getBinaryFromUrl from "../getBinaryFromUrl";
 
 // Function to convert text to Unicode bold
-function toUnicodeBold(text: any) {
-  return text
-    .split("")
-    .map((char: any) => {
-      const code = char.charCodeAt(0);
-      if (code >= 65 && code <= 90) {
-        // Uppercase A-Z
-        return String.fromCharCode(code + 0x1d3e0 - 65);
-      } else if (code >= 97 && code <= 122) {
-        // Lowercase a-z
-        return String.fromCharCode(code + 0x1d3e0 - 97);
-      } else if (code >= 48 && code <= 57) {
-        // Numbers 0-9
-        return String.fromCharCode(code + 0x1d7ce - 48);
-      } else {
-        return char; // Non-alphanumeric characters remain unchanged
-      }
-    })
-    .join("");
-}
+// function processMarkdown(markdownContent: string) {
+//   // Process MentionElements
+//   markdownContent = markdownContent.replace(
+//     /@\[([^\]]+)\]\(([^)]+)\)/g,
+//     (match, text, urn) => {
+//       return `@${text}(${urn})`;
+//     }
+//   );
 
-// Function to process Markdown into Unicode styled text
-function convertMarkdownToUnicode(text: any) {
-  return text
-    .replace(/\*(.*?)\*/g, (_: any, match: any) => toUnicodeBold(match)) // Bold
-    .replace(/_(.*?)_/g, (_: any, match: any) => `\u1D608${match}\u1D608`) // Italic (approximate with enclosing)
-    .replace(/~(.*?)~/g, (_: any, match: any) =>
-      match
-        .split("")
-        .map((c: any) => `̶${c}`)
-        .join("")
-    ); // Strikethrough
+//   // Process HashtagElements
+//   markdownContent = markdownContent.replace(/#(\w+)/g, (match, tag) => {
+//     return `#${tag}`;
+//   });
+
+//   // Process HashtagTemplates
+//   markdownContent = markdownContent.replace(
+//     /\{hashtag\|(#|＃)\|([^}]+)\}/g,
+//     (match, symbol, text) => {
+//       return `${symbol}${text}`;
+//     }
+//   );
+
+//   // Escape reserved characters
+//   const reservedChars = "\\|{}@[]()<>#*_~";
+//   markdownContent = markdownContent.replace(
+//     new RegExp(`[${reservedChars}]`, "g"),
+//     (match) => {
+//       return `\\${match}`;
+//     }
+//   );
+
+//   return markdownContent;
+// }
+
+function processMarkdown(markdownContent: any) {
+  let output = markdownContent.replace(
+    /[\(\)\[\]\{\}<>@|~_]/gm,
+    (x: any) => `\\` + x
+  );
+  // let output = markdownContent.replace(
+  //   /[\(*\)\[\]\{\}<>@|~_]/gm,
+  //   (x: any) => `\\` + x
+  // );
+
+  console.log("output: ", JSON.stringify(output));
+
+  output = output.replaceAll("*", "");
+
+  return output;
+
+  // 2
+  // // Replace double asterisks (**) with //**
+  // markdownContent = markdownContent.replace(/\*\*/g, "//**");
+
+  // // Replace single asterisks (*) with //*
+  // markdownContent = markdownContent.replace(/(?<!\/)\*(?!\*)/g, "//*");
+
+  // console.log("output: ", JSON.stringify(markdownContent));
+
+  // return markdownContent;
+
+  // // 3
+  // // Replace double asterisks first (**text**) with //**text//**
+  // markdownContent = markdownContent.replace(/\*\*(.+?)\*\*/g, "//**$1//**");
+
+  // // Replace single asterisks (*text*) with //**text//**
+  // markdownContent = markdownContent.replace(/\*(.+?)\*/g, "//**$1//**");
+
+  // console.log("output: ", JSON.stringify(markdownContent));
+
+  // return markdownContent;
 }
 
 const textPublish = async (postId: any) => {
@@ -62,7 +101,7 @@ const textPublish = async (postId: any) => {
     // 4. Create the linkedin post
     const postData = {
       author: authorUrn,
-      commentary: convertMarkdownToUnicode(post?.commentary),
+      commentary: processMarkdown(post?.commentary),
       // "Hello, these are some bullet points:\n\n\\* Point 1\n\\* Point 2\n\\* Point 3 𝐒𝐚𝐢𝐝𝐮𝐥 𝐛𝐚𝐝𝐡𝐨𝐧",
       visibility: "PUBLIC",
       distribution: {
