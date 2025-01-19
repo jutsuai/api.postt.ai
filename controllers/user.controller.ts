@@ -24,7 +24,7 @@ export const getUsers = async (c: Context) => {
 
 export const getUserById = async (c: Context | any) => {
   try {
-    const { id } = await c.req.param();
+    const id = await c.req.param("id");
     const user = await User.findById(id);
 
     return c.json({
@@ -47,7 +47,10 @@ export const getUserById = async (c: Context | any) => {
  * @access Private
  */
 export const updateUser = async (c: Context | any) => {
-  const user = await User.findByIdAndUpdate(c.params.id, c.req.json(), {
+  const id = await c.req.param("id");
+  const body = await c.req.json();
+
+  const user = await User.findByIdAndUpdate(id, body, {
     new: true,
     runValidators: true,
   });

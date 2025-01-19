@@ -1,5 +1,5 @@
 import { Context } from "hono";
-import { User } from "../models";
+import { LinkedinProfile, User } from "../models";
 import { genToken } from "../utils";
 // import { LinkedInApiClient } from "linkedin-api-client";
 
@@ -184,8 +184,8 @@ export const linkedinCallback = async (c: Context) => {
       // Update existing user
       token = await genToken(userExists._id.toString());
 
-      await User.updateOne(
-        { linkedinId: liUser?.id },
+      const usr = (await User.findOneAndUpdate(
+        { linkedinId: liUser?.id || liUser?.sub },
         {
           $set: {
             avatar: liUser?.picture,
@@ -195,8 +195,18 @@ export const linkedinCallback = async (c: Context) => {
               scope: tokenDetails.scope,
             },
           },
-        }
+        },
+        { new: true }
+      )) as any;
+
+      console.log("========> :usr : ", usr);
+
+      const updatedProfile = await LinkedinProfile.findOneAndUpdate(
+        { createdBy: usr._id, type: "person" },
+        { logo: liUser?.picture },
+        { new: true }
       );
+      console.log("========> :updatedProfile : ", updatedProfile);
 
       return c.json({
         status: 200,
